@@ -13,12 +13,12 @@ class qpen(QtGui.QWidget):
         
         self.initUI()
         self.gridsize=20
-        self.xgridsize=25
-        self.ygridsize=15
+        self.xgridsize=50
+        self.ygridsize=10
         self.leftmargin=50
         self.lowmargin=40
         self.yoffset=0
-        self.xoffset=-20
+        self.xoffset=0
         self.path=path
         
     def initUI(self):
@@ -44,6 +44,7 @@ class qpen(QtGui.QWidget):
         y=event.globalY()
         self.yoffset+=y-self.ystart
         self.xoffset+=x-self.xstart
+        
         if self.xoffset>0:
             self.xoffset=0
         
@@ -102,7 +103,9 @@ class qpen(QtGui.QWidget):
         
     def drawBars(self, qp, data):
         
-        pen = QtGui.QPen(QtCore.Qt.red, self.xgridsize/2, QtCore.Qt.SolidLine)
+        thickness=2
+        
+        pen = QtGui.QPen(QtCore.Qt.red, thickness, QtCore.Qt.SolidLine)
         qp.setPen(pen)
         
         time=data.get_data(0).get_data()
@@ -110,15 +113,13 @@ class qpen(QtGui.QWidget):
         #line2=data.get_data(2).get_data()
         avg=data.get_data(1).get_avg()
         
-        
-        self.yoffset=avg/2
-        
-        
         for x in range(0,len(time)):
-            x1=x*self.xgridsize+self.leftmargin+self.xgridsize/2
-            y1=-line[x]+self.height()-self.lowmargin+self.yoffset
+            x1=x*self.xgridsize+self.leftmargin+self.xgridsize/2+self.xoffset
+            y1=self.height()-self.lowmargin-thickness/2+self.yoffset
+            y2=-line[x]+self.height()-self.lowmargin+thickness/2+self.yoffset
+                
             print(line[x])
-            qp.drawLine(x1,self.yoffset,x1,y1)
+            qp.drawLine(x1,y1,x1,y2)
         
             
     def drawGrid(self, qp, data, type):
@@ -156,7 +157,7 @@ class qpen(QtGui.QWidget):
         
         #TEXT
         #horizontal
-        for x in range(0,xrange):
+        for x in range(int(-self.xoffset/xgridsize)+1,xrange):
             qp.drawText(startx+x*xgridsize+self.xoffset,starty+20,str(x))
             
         #vertical
