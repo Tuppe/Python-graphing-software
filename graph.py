@@ -13,11 +13,12 @@ class qpen(QtGui.QWidget):
         
         self.initUI()
         self.gridsize=20
-        self.xgridsize=40
-        self.ygridsize=10
+        self.xgridsize=25
+        self.ygridsize=15
         self.leftmargin=50
         self.lowmargin=40
         self.yoffset=0
+        self.xoffset=-20
         self.path=path
         
     def initUI(self):
@@ -29,16 +30,27 @@ class qpen(QtGui.QWidget):
         self.xstart=event.globalX()
         self.ystart=event.globalY()
     
+    def mouseDoubleClickEvent(self, event):
+        super(qpen, self).mouseDoubleClickEvent(event)
+        #reset offset
+        self.yoffset=0
+        self.xoffset=0
+        self.update()
+        
     def mouseMoveEvent(self, event):
         super(qpen, self).mouseMoveEvent(event)
         #track mouse dragging
         x=event.globalX()
         y=event.globalY()
         self.yoffset+=y-self.ystart
+        self.xoffset+=x-self.xstart
+        if self.xoffset>0:
+            self.xoffset=0
+        
+        #reset offset counter
         self.ystart=y
-        self.update()
-        #print(self.xstart-x)
-        #print(self.ystart-y)
+        self.xstart=x
+        self.update() #update graph
         
     def paintEvent(self, e):
 
@@ -82,32 +94,31 @@ class qpen(QtGui.QWidget):
             pen = QtGui.QPen(color, 2, QtCore.Qt.SolidLine)
             qp.setPen(pen)
             for x in range(0,len(time)-1):
-                x1=time[x]*self.xgridsize+self.leftmargin
+                x1=time[x]*self.xgridsize+self.leftmargin+self.xoffset
                 y1=-lines[y][x]+self.height()-self.lowmargin+self.yoffset
-                x2=time[x+1]*self.xgridsize+self.leftmargin
+                x2=time[x+1]*self.xgridsize+self.leftmargin+self.xoffset
                 y2=-lines[y][x+1]+self.height()-self.lowmargin+self.yoffset
                 qp.drawLine(x1,y1,x2,y2)
         
     def drawBars(self, qp, data):
         
-        pen = QtGui.QPen(QtCore.Qt.red, self.gridsize/2, QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(QtCore.Qt.red, self.xgridsize/2, QtCore.Qt.SolidLine)
         qp.setPen(pen)
-        
         
         time=data.get_data(0).get_data()
         line=data.get_data(1).get_data()
-        line2=data.get_data(2).get_data()
+        #line2=data.get_data(2).get_data()
         avg=data.get_data(1).get_avg()
         
         
         self.yoffset=avg/2
         
-        print(line)
         
         for x in range(0,len(time)):
-            x1=x*self.gridsize+40+self.gridsize/2
-            y1=-line[x]+self.yoffset*10
-            qp.drawLine(x1,self.yoffset*10,x1,y1)
+            x1=x*self.xgridsize+self.leftmargin+self.xgridsize/2
+            y1=-line[x]+self.height()-self.lowmargin+self.yoffset
+            print(line[x])
+            qp.drawLine(x1,self.yoffset,x1,y1)
         
             
     def drawGrid(self, qp, data, type):
@@ -131,44 +142,28 @@ class qpen(QtGui.QWidget):
         startx=self.width()-self.width()+self.leftmargin
         starty=self.height()-self.lowmargin
         
-        rangelimit=int(self.yoffset/ygridsize)+50
+        yrange=int(self.yoffset/ygridsize)+int(self.height()/self.ygridsize)
+        xrange=int(-self.xoffset/xgridsize)+int(self.width()/self.xgridsize)
         
-        for y in range(int(self.yoffset/ygridsize),rangelimit):
+        #LINES
+        #horizontal
+        for y in range(int(self.yoffset/ygridsize),yrange):
             qp.drawLine(startx,starty-y*ygridsize+self.yoffset,self.width(),self.height()-self.lowmargin-y*ygridsize+self.yoffset)
+        
+        #vertical
+        for x in range(int(-self.xoffset/xgridsize)+1,xrange):
+            qp.drawLine(startx+x*xgridsize+self.xoffset,starty,startx+x*xgridsize+self.xoffset,0)
+        
+        #TEXT
+        #horizontal
+        for x in range(0,xrange):
+            qp.drawText(startx+x*xgridsize+self.xoffset,starty+20,str(x))
             
-        for x in range(0,50):
-            qp.drawLine(startx+x*xgridsize,starty,startx+x*xgridsize,0)
-            
-        for y in range(int(self.yoffset/ygridsize),rangelimit):
+        #vertical
+        for y in range(int(self.yoffset/ygridsize),yrange):
             qp.drawText(20,starty-y*ygridsize+self.yoffset,str(y*ygridsize))
             
             
-        for x in range(0,50):
-            qp.drawText(startx+x*xgridsize,starty+20,str(x))
-            
-        '''
-        if type=="LINE":
-            #values
-            for x in range(4,int(width/xgridsize)+1):
-                if (x%2==0):
-                    qp.drawText(x*xgridsize,height-xgridsize,str(x-4))
-            
-            for y in range(0,int(height/ygridsize)):
-                if (y%1==0):
-                    qp.drawText(10,y*ygridsize+10*self.yoffset,str(-y*ygridsize))
-                    qp.drawText(10,-y*ygridsize+10*self.yoffset,str(y*ygridsize))
-        
-        if type=="BAR":
-            print(time)
-            #values
-            for x in range(0,len(time)):
-                qp.drawText(x*gridsize+40,height-gridsize,str(time[x]))
-            
-            for y in range(0,int(height/gridsize)):
-                if (y%1==0):
-                    qp.drawText(10,y*gridsize+10*self.yoffset,str(-y*gridsize))
-                    qp.drawText(10,-y*gridsize+10*self.yoffset,str(y*gridsize))
-        '''
             
 '''      
 if __name__ == '__main__':
