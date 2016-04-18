@@ -12,24 +12,38 @@ class qpen(QtGui.QWidget):
         super().__init__()
         
         self.initUI()
-        self.yoffset=0
         self.gridsize=20
-        self.xgridsize=50
-        self.ygridsize=60
+        self.xgridsize=40
+        self.ygridsize=10
         self.leftmargin=50
         self.lowmargin=40
+        self.yoffset=0
         self.path=path
         
-        
-    def initUI(self):      
-
-        self.setGeometry(300, 300, 280, 170)
+    def initUI(self):
         self.show()
         
-
+    def mousePressEvent(self, event):
+        super(qpen, self).mousePressEvent(event)
+        #get global window position when mouse pressed
+        self.xstart=event.globalX()
+        self.ystart=event.globalY()
+    
+    def mouseMoveEvent(self, event):
+        super(qpen, self).mouseMoveEvent(event)
+        #track mouse dragging
+        x=event.globalX()
+        y=event.globalY()
+        self.yoffset+=y-self.ystart
+        self.ystart=y
+        self.update()
+        #print(self.xstart-x)
+        #print(self.ystart-y)
+        
     def paintEvent(self, e):
 
-        somedata=Data()
+        self.somedata=Data()
+        somedata=self.somedata
         type=somedata.load(self.path)
         #print(self.path)
         #print(somedata)
@@ -62,7 +76,6 @@ class qpen(QtGui.QWidget):
         line=data.get_data(1).get_data()
         
         avg=data.get_data(1).get_avg()
-        self.yoffset=self.height()-self.lowmargin
         
         for y in range(1,data.get_length()):
             color=QtGui.QColor(randint(0,255),randint(0,255),randint(0,255))
@@ -70,9 +83,9 @@ class qpen(QtGui.QWidget):
             qp.setPen(pen)
             for x in range(0,len(time)-1):
                 x1=time[x]*self.xgridsize+self.leftmargin
-                y1=-lines[y][x]+self.yoffset
+                y1=-lines[y][x]+self.height()-self.lowmargin+self.yoffset
                 x2=time[x+1]*self.xgridsize+self.leftmargin
-                y2=-lines[y][x+1]+self.yoffset
+                y2=-lines[y][x+1]+self.height()-self.lowmargin+self.yoffset
                 qp.drawLine(x1,y1,x2,y2)
         
     def drawBars(self, qp, data):
@@ -118,14 +131,17 @@ class qpen(QtGui.QWidget):
         startx=self.width()-self.width()+self.leftmargin
         starty=self.height()-self.lowmargin
         
-        for y in range(0,50):
-            qp.drawLine(startx,starty-y*ygridsize,self.width(),self.height()-self.lowmargin-y*ygridsize)
+        rangelimit=int(self.yoffset/ygridsize)+50
+        
+        for y in range(int(self.yoffset/ygridsize),rangelimit):
+            qp.drawLine(startx,starty-y*ygridsize+self.yoffset,self.width(),self.height()-self.lowmargin-y*ygridsize+self.yoffset)
             
         for x in range(0,50):
             qp.drawLine(startx+x*xgridsize,starty,startx+x*xgridsize,0)
             
-        for y in range(0,50):
-            qp.drawText(20,starty-y*ygridsize,str(y*ygridsize))
+        for y in range(int(self.yoffset/ygridsize),rangelimit):
+            qp.drawText(20,starty-y*ygridsize+self.yoffset,str(y*ygridsize))
+            
             
         for x in range(0,50):
             qp.drawText(startx+x*xgridsize,starty+20,str(x))
