@@ -14,9 +14,13 @@ class Data(object):
     def load(self, path):
         
         if path==0:
+            file.close()
             return 0
-        
-        file = open(path)
+        try:
+            file = open(path)
+        except(FileNotFoundError):
+            file.close()
+            return 0
         
         data=[]
         
@@ -38,9 +42,10 @@ class Data(object):
                         if data[x][y].isnumeric()==1:
                             newlist.append(int(data[x][y])) #valid data
                         else:
+                            file.close()
                             return 0 #invalid data
                         
-                    if type=="BAR":
+                    if type=="BAR" or type=="PIE":
                         if y==0:
                             newlist.append(data[x][y]) #valid data
                         else:
@@ -55,6 +60,7 @@ class Data(object):
         self.data=store
         self.length=len(store)
         
+        file.close()
         return type
     
     def get_data(self,index):
@@ -86,11 +92,31 @@ class Line:
     def get_max(self):
         return self._max
     
+    def get_len(self):
+        return len(self._data)
+    
+    def get_sum(self):
+        asum=0
+        try:
+            for x in range(0,len(self._data)):
+                asum+=self._data[x]
+        except(TypeError):
+            return -1
+        
+        return asum
+    
     def get_avg(self):
         asum=0
-        for x in range(0,len(self._data)):
-            asum+=self._data[x]
-            
+        
+        try:
+            for x in range(0,len(self._data)):
+                asum+=self._data[x]
+        except(TypeError):
+            return -1
+        
+        if len(self._data)==0:
+            return -1
+        
         return asum/len(self._data)
         
         

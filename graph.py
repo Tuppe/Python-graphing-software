@@ -61,7 +61,6 @@ class qpen(QtGui.QWidget):
             self.yscale-=(y-self.ystart)/100
             if self.yscale<1:
                 self.yscale=1
-        print(self.yscale)
         
         #reset offset counter
         self.ystart=y
@@ -78,12 +77,15 @@ class qpen(QtGui.QWidget):
         qp.begin(self)
         
         if type!=0:
-            self.drawGrid(qp, somedata, type)
+            if type!="PIE":
+                self.drawGrid(qp, somedata, type)
             
             if type=="LINE":
                 self.drawLines(qp, somedata)
             if type=="BAR":
                 self.drawBars(qp, somedata)
+            if type=="PIE":
+                self.drawPie(qp, somedata)
         else:
             print("poor file")
         
@@ -131,6 +133,35 @@ class qpen(QtGui.QWidget):
             
             qp.fillRect(x1+1,y1,self.xgridsize-2,-line[x]*self.yscale,QtCore.Qt.blue)
         
+    def drawPie(self,qp,data):
+
+        datalen=data.get_data(1).get_sum()
+        
+        piedata=[]
+        piesum=1200
+        piesize=self.height()-80
+        
+        #get data and normalize it to 5760
+        for x in range(0,data.get_data(1).get_len()):
+            piedata.append(data.get_data(1).get_data()[x]/datalen*5760)
+        
+        piedata.sort(reverse=True)
+        
+        #draw pie
+        for x in range(0,data.get_data(1).get_len()):
+            color=QtGui.QColor(randint(0,255),randint(0,255),randint(0,255))
+            qp.setBrush(color)
+            qp.setPen(color)
+            qp.drawPie(piesize/5,self.height()/2-piesize/2,piesize,piesize,piesum,piedata[x])
+            piesum+=piedata[x]
+        
+        #title label
+        qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
+        qp.setFont(qf)
+        qp.setPen(QtGui.QPen(QtCore.Qt.black, 5, QtCore.Qt.SolidLine))
+        qp.drawText(self.width()/2,self.height()-5,str(data.get_data(1).get_name()))
+        
+            
         
     def drawGrid(self, qp, data, type):
         

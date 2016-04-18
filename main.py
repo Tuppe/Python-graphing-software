@@ -13,7 +13,7 @@ class MainWindow(QtGui.QMainWindow):
         super().__init__()
         #self.showDialog()
         self.graphWidget=0
-        self.set_graph('data_ok2.csv')
+        self.set_graph('data_pie.csv')
         self.initUI()
     
     def initUI(self):
