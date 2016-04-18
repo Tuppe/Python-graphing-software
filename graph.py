@@ -13,11 +13,12 @@ class qpen(QtGui.QWidget):
         
         self.initUI()
         self.xgridsize=50
-        self.ygridsize=10
+        self.ygridsize=25
+        self.yscale=1
         self.leftmargin=50
         self.lowmargin=40
         self.yoffset=0
-        self.xoffset=0
+        self.xoffset=1
         self.path=path
         
     def initUI(self):
@@ -25,6 +26,7 @@ class qpen(QtGui.QWidget):
         
     def mousePressEvent(self, event):
         super(qpen, self).mousePressEvent(event)
+        self.button=event.button()
         #get global window position when mouse pressed
         self.xstart=event.globalX()
         self.ystart=event.globalY()
@@ -38,14 +40,28 @@ class qpen(QtGui.QWidget):
         
     def mouseMoveEvent(self, event):
         super(qpen, self).mouseMoveEvent(event)
+        
         #track mouse dragging
         x=event.globalX()
         y=event.globalY()
-        self.yoffset+=y-self.ystart
-        self.xoffset+=x-self.xstart
         
-        if self.xoffset>0:
-            self.xoffset=0
+        if self.button==1:
+            self.yoffset+=y-self.ystart
+            self.xoffset+=x-self.xstart
+            
+        if self.button==2:
+            self.ygridsize-=int((y-self.ystart)/2)
+            self.xgridsize+=int((x-self.xstart)/2)
+            if self.ygridsize<5:
+                self.ygridsize=5
+            if self.xgridsize<5:
+                self.xgridsize=5
+                
+        if self.button==4:
+            self.yscale-=(y-self.ystart)/100
+            if self.yscale<1:
+                self.yscale=1
+        print(self.yscale)
         
         #reset offset counter
         self.ystart=y
@@ -99,9 +115,7 @@ class qpen(QtGui.QWidget):
         
     def drawBars(self, qp, data):
         
-        thickness=2
-        
-        pen = QtGui.QPen(QtCore.Qt.black, thickness, QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(QtCore.Qt.black, 5, QtCore.Qt.SolidLine)
         qp.setPen(pen)
         
         time=data.get_data(0).get_data()
@@ -112,10 +126,10 @@ class qpen(QtGui.QWidget):
         
         #Draw bars
         for x in range(0,len(time)):
-            x1=x*self.xgridsize+self.leftmargin+self.xgridsize/2+self.xoffset
-            y1=self.height()-self.lowmargin-thickness/2+self.yoffset
+            x1=x*self.xgridsize+self.leftmargin+self.xoffset
+            y1=self.height()-self.lowmargin+self.yoffset
             
-            qp.fillRect(x1-self.xgridsize/2+5,y1,self.xgridsize-10,-line[x],QtCore.Qt.green)
+            qp.fillRect(x1+1,y1,self.xgridsize-2,-line[x]*self.yscale,QtCore.Qt.blue)
         
         
     def drawGrid(self, qp, data, type):
@@ -137,46 +151,69 @@ class qpen(QtGui.QWidget):
         ymax=int(self.yoffset/ygridsize)+int(self.height()/self.ygridsize)
         xmax=int(-self.xoffset/xgridsize)+int(self.width()/self.xgridsize)
         
+        if self.xoffset>0:
+            xmin=xmin-1
         
+        if self.yoffset>0:
+            ymin=ymin+1
+            
         ##LINES##
         #horizontal
-        for y in range(int(self.yoffset/ygridsize),ymax):
-            qp.drawLine(self.leftmargin,starty-y*ygridsize+self.yoffset,self.width(),self.height()-self.lowmargin-y*ygridsize+self.yoffset)
+        for y in range(ymin,ymax):
+            x1=self.leftmargin
+            y1=starty-y*ygridsize+self.yoffset
+            x2=self.width()
+            y2=self.height()-self.lowmargin-y*ygridsize+self.yoffset
+            qp.drawLine(x1,y1,x2,y2)
+            qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.SolidLine))
+            qp.drawLine(x1-6,y1,self.leftmargin,y2) #short value guidelines
+            qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.DotLine))
         
         #vertical
         for x in range(xmin,xmax):
             xpos=self.leftmargin+x*xgridsize+self.xoffset
             qp.drawLine(xpos,starty,xpos,0)
         
+        #draw sold axes
+        qp.setPen(QtGui.QPen(QtCore.Qt.black, 1.5, QtCore.Qt.SolidLine))
+        qp.drawLine(self.leftmargin,starty,self.leftmargin,0) #left limiter
+        #qp.drawLine(self.leftmargin+self.xoffset,starty,self.leftmargin+self.xoffset,0) #starting axis
+        qp.drawLine(self.leftmargin,starty+self.yoffset,self.width(),self.height()-self.lowmargin+self.yoffset) #zero line
+        qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.DotLine))
+        
         ##TEXT##
         #horizontal
+        
         if type=='LINE':
-            for x in range(xmin-1,xmax):
+            for x in range(xmin,xmax):
                 xpos=self.leftmargin+x*xgridsize+self.xoffset
                 qp.drawText(xpos,starty+20,str(x))
-                
+        
         if type=='BAR':
-            for x in range(xmin-1,len(time.get_data())):
+            if xmin<0:
+                xmin=0
+            for x in range(xmin,len(time.get_data())):
                 xpos=self.leftmargin+x*xgridsize+self.xoffset
                 qp.drawText(xpos,starty+20,str(time.get_data()[x]))
         
         #vertical
         for y in range(ymin,ymax):
             qp.drawText(20,starty-y*ygridsize+self.yoffset+5,str(y*ygridsize))
-            
+        
+        
         ##TITLES##
         #horizontal
         qp.drawText(self.width()/2,self.height()-5,str(time.get_name()))
         
         #vertical
-        qp.translate(15,self.height()/2)
+        self.rotated_text(qp,15,self.height()/2,str(self.somedata.get_data(1).get_name()))
+        
+    def rotated_text(self,qp,x,y,text):
+        qp.translate(x,y)
         qp.rotate(-90)
-        qp.drawText(0,0,str(line.get_name()))
+        qp.drawText(0,0,text)
         qp.rotate(90)
-        qp.translate(-15,-self.height()/2)
-        
-        
-        
+        qp.translate(-x,-y)
             
             
 '''      
