@@ -41,6 +41,17 @@ class qpen(QtGui.QWidget):
         self.yscale=1
         self.update()
         
+    def wheelEvent(self, event):
+        super(qpen, self).wheelEvent(event)
+        if (event.delta()>0):
+            self.ygridsize+=5
+            self.xgridsize+=5
+        if (event.delta()<0) and self.ygridsize>5 and self.xgridsize>5:
+            self.ygridsize-=5
+            self.xgridsize-=5
+        self.update() #update graph
+            
+        
     def mouseMoveEvent(self, event):
         super(qpen, self).mouseMoveEvent(event)
         
@@ -84,12 +95,10 @@ class qpen(QtGui.QWidget):
             if type!="PIE":
                 self.drawGrid(qp, somedata, type)
             
-            qp.end()
+            qp.setClipRect(self.leftmargin,0,self.width(),self.height()-self.lowmargin) #drawing limits for margins
             
-            qp = QtGui.QPainter()
-            qp.begin(self)
-            qp.setClipRect(self.leftmargin,0,self.width(),self.height()-self.lowmargin)
-            qp.setRenderHint(QtGui.QPainter.Antialiasing,True)
+            qp.setRenderHint(QtGui.QPainter.Antialiasing,True) #smoothing
+            
             if type=="LINE":
                 self.drawGraphs(qp, somedata)
             if type=="BAR":
@@ -233,7 +242,9 @@ class qpen(QtGui.QWidget):
         qp.drawLine(self.leftmargin,starty,self.leftmargin,0) #left limiter
         
         qp.setPen(QtGui.QPen(QtCore.Qt.gray, 1.5, QtCore.Qt.SolidLine))
-        qp.drawLine(self.leftmargin+self.xoffset,starty,self.leftmargin+self.xoffset,0) #starting axis
+        
+        if self.xoffset>0:
+            qp.drawLine(self.leftmargin+self.xoffset,starty,self.leftmargin+self.xoffset,0) #starting axis
         if self.yoffset<0:
             qp.drawLine(self.leftmargin,starty+self.yoffset,self.width(),self.height()-self.lowmargin+self.yoffset) #zero line
         qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.DotLine))
@@ -253,9 +264,15 @@ class qpen(QtGui.QWidget):
                 xpos=self.leftmargin+x*xgridsize+self.xoffset
                 qp.drawText(xpos,starty+20,str(time.get_data()[x]))
         
+        if self.ygridsize<10:
+            divider=2
+        else:
+            divider=1
+            
         #vertical
         for y in range(ymin,ymax):
-            qp.drawText(20,starty-y*ygridsize+self.yoffset+5,str(y*ygridsize))
+            if y%divider==0:
+                qp.drawText(20,starty-y*ygridsize+self.yoffset+5,str(y*ygridsize))
         
         
         ##TITLES##
