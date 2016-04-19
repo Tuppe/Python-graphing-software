@@ -38,6 +38,7 @@ class qpen(QtGui.QWidget):
         #reset offset
         self.yoffset=0
         self.xoffset=0
+        self.yscale=1
         self.update()
         
     def mouseMoveEvent(self, event):
@@ -75,26 +76,33 @@ class qpen(QtGui.QWidget):
         somedata=self.somedata
         type=somedata.load(self.path)
         
-        qp = QtGui.QPainter()
-        qp.begin(self)
-        qp.setRenderHint(QtGui.QPainter.Antialiasing,True)
-        
         if type!=0:
+            qp = QtGui.QPainter()
+            qp.begin(self)
+            qp.setRenderHint(QtGui.QPainter.Antialiasing,True)
+        
             if type!="PIE":
                 self.drawGrid(qp, somedata, type)
             
+            qp.end()
+            
+            qp = QtGui.QPainter()
+            qp.begin(self)
+            qp.setClipRect(self.leftmargin,0,self.width(),self.height()-self.lowmargin)
+            qp.setRenderHint(QtGui.QPainter.Antialiasing,True)
             if type=="LINE":
-                self.drawLines(qp, somedata)
+                self.drawGraphs(qp, somedata)
             if type=="BAR":
                 self.drawBars(qp, somedata)
             if type=="PIE":
                 self.drawPie(qp, somedata)
+                
+            qp.end()
         else:
             print("poor file")
         
-        qp.end()
         
-    def drawLines(self, qp, data):
+    def drawGraphs(self, qp, data):
         
         lines=[]
         
@@ -104,6 +112,7 @@ class qpen(QtGui.QWidget):
         time=lines[0]
         line=data.get_data(1).get_data()
         avg=data.get_data(1).get_avg()
+        
         
         #Draw line graph from X and Y coordinates
         for y in range(1,data.get_length()):
@@ -222,8 +231,11 @@ class qpen(QtGui.QWidget):
         #draw sold axes
         qp.setPen(QtGui.QPen(QtCore.Qt.black, 1.5, QtCore.Qt.SolidLine))
         qp.drawLine(self.leftmargin,starty,self.leftmargin,0) #left limiter
-        #qp.drawLine(self.leftmargin+self.xoffset,starty,self.leftmargin+self.xoffset,0) #starting axis
-        qp.drawLine(self.leftmargin,starty+self.yoffset,self.width(),self.height()-self.lowmargin+self.yoffset) #zero line
+        
+        qp.setPen(QtGui.QPen(QtCore.Qt.gray, 1.5, QtCore.Qt.SolidLine))
+        qp.drawLine(self.leftmargin+self.xoffset,starty,self.leftmargin+self.xoffset,0) #starting axis
+        if self.yoffset<0:
+            qp.drawLine(self.leftmargin,starty+self.yoffset,self.width(),self.height()-self.lowmargin+self.yoffset) #zero line
         qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.DotLine))
         
         ##TEXT##
