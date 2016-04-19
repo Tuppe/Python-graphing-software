@@ -20,11 +20,22 @@ class qpen(QtGui.QWidget):
         self.yoffset=0
         self.xoffset=1
         self.path=path
+        self.xtitle=''
+        self.ytitle=''
+        self.somedata=0
+        self.datatype=0
+        self.loadData()
         
     def initUI(self):
         grid = QtGui.QGridLayout()
         self.setLayout(grid)
         self.show()
+    
+    def set_yname(self,yname):
+        self.ytitle=yname
+        
+    def set_xname(self,xname):
+        self.xtitle=xname
         
     def mousePressEvent(self, event):
         super(qpen, self).mousePressEvent(event)
@@ -80,31 +91,37 @@ class qpen(QtGui.QWidget):
         self.ystart=y
         self.xstart=x
         self.update() #update graph
+    
+    def loadData(self):
+        
+        self.somedata=Data()
+        self.datatype=self.somedata.load(self.path)
+        
+        self.xtitle=str(self.somedata.get_data(0).get_name())
+        self.ytitle=str(self.somedata.get_data(1).get_name())
         
     def paintEvent(self, e):
 
-        self.somedata=Data()
-        somedata=self.somedata
-        type=somedata.load(self.path)
+        #self.loadData()
         
-        if type!=0:
+        if self.datatype!=0:
             qp = QtGui.QPainter()
             qp.begin(self)
             qp.setRenderHint(QtGui.QPainter.Antialiasing,True)
         
-            if type!="PIE":
-                self.drawGrid(qp, somedata, type)
+            if self.datatype!="PIE":
+                self.drawGrid(qp, self.somedata, type)
             
             qp.setClipRect(self.leftmargin,0,self.width(),self.height()-self.lowmargin) #drawing limits for margins
             
             qp.setRenderHint(QtGui.QPainter.Antialiasing,True) #smoothing
             
-            if type=="LINE":
-                self.drawGraphs(qp, somedata)
-            if type=="BAR":
-                self.drawBars(qp, somedata)
-            if type=="PIE":
-                self.drawPie(qp, somedata)
+            if self.datatype=="LINE":
+                self.drawGraphs(qp, self.somedata)
+            if self.datatype=="BAR":
+                self.drawBars(qp, self.somedata)
+            if self.datatype=="PIE":
+                self.drawPie(qp, self.somedata)
                 
             qp.end()
         else:
@@ -277,10 +294,9 @@ class qpen(QtGui.QWidget):
         
         ##TITLES##
         #horizontal
-        qp.drawText(self.width()/2,self.height()-5,str(time.get_name()))
-        
+        qp.drawText(self.width()/2,self.height()-5,self.xtitle)
         #vertical
-        self.rotated_text(qp,15,self.height()/2,str(self.somedata.get_data(1).get_name()))
+        self.rotated_text(qp,15,self.height()/2,self.ytitle)
         
     def rotated_text(self,qp,x,y,text):
         qp.translate(x,y)
