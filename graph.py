@@ -3,7 +3,7 @@
 import sys
 from PyQt4 import QtGui, QtCore
 
-from random import randint
+import random
 from loadfile import Data
 
 class qpen(QtGui.QWidget):
@@ -22,6 +22,8 @@ class qpen(QtGui.QWidget):
         self.path=path
         
     def initUI(self):
+        grid = QtGui.QGridLayout()
+        self.setLayout(grid)
         self.show()
         
     def mousePressEvent(self, event):
@@ -75,6 +77,7 @@ class qpen(QtGui.QWidget):
         
         qp = QtGui.QPainter()
         qp.begin(self)
+        qp.setRenderHint(QtGui.QPainter.Antialiasing,True)
         
         if type!=0:
             if type!="PIE":
@@ -104,7 +107,7 @@ class qpen(QtGui.QWidget):
         
         #Draw line graph from X and Y coordinates
         for y in range(1,data.get_length()):
-            color=QtGui.QColor(randint(0,255),randint(0,255),randint(0,255))
+            color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*y,0.9,0.9,0.9)
             pen = QtGui.QPen(color, 2, QtCore.Qt.SolidLine)
             qp.setPen(pen)
             
@@ -138,7 +141,7 @@ class qpen(QtGui.QWidget):
         datalen=data.get_data(1).get_sum()
         
         piedata=[]
-        piesum=1200
+        piesum=0
         piesize=self.height()-80
         
         #get data and normalize it to 5760
@@ -148,12 +151,23 @@ class qpen(QtGui.QWidget):
         piedata.sort(reverse=True)
         
         #draw pie
-        for x in range(0,data.get_data(1).get_len()):
-            color=QtGui.QColor(randint(0,255),randint(0,255),randint(0,255))
-            qp.setBrush(color)
-            qp.setPen(color)
-            qp.drawPie(piesize/5,self.height()/2-piesize/2,piesize,piesize,piesum,piedata[x])
-            piesum+=piedata[x]
+        for p in range(0,30):
+            for x in range(0,data.get_data(1).get_len()):
+                color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*x,0.9,0.9,1)
+                qp.setBrush(color)
+                qp.setPen(color)
+                qp.drawPie(piesize/5,self.height()/2-piesize/3-p,piesize,piesize/2,piesum,piedata[x])
+                
+                piesum+=piedata[x]
+                
+                qp.fillRect(self.width()/2,10+30*x,30,20,color)
+                
+                if p==0:
+                    qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
+                    qp.setFont(qf)
+                    qp.setPen(QtCore.Qt.black)
+                    qp.drawText(self.width()/2+40,25+30*x,'{:.1f}'.format(piedata[x]/57.6)+" % - "+data.get_data(0).get_data()[x])
+                
         
         #title label
         qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
