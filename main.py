@@ -13,7 +13,7 @@ class MainWindow(QtGui.QMainWindow):
         super().__init__()
         #self.showDialog()
         self.graphWidget=0
-        self.set_graph('data_ok2.csv')
+        self.set_graph('data_ok.csv')
         self.initUI()
     
     def initUI(self):
@@ -27,10 +27,13 @@ class MainWindow(QtGui.QMainWindow):
         toolbar = self.addToolBar('Exit')
         toolbar.addAction(exitAction)
         
-        
         exitAction2 = QtGui.QAction(QtGui.QIcon(''), 'X-Title', self)
         exitAction2.triggered.connect(self.showNameDialog)
         toolbar.addAction(exitAction2)
+        
+        exitAction3 = QtGui.QAction(QtGui.QIcon(''), 'Y-Title', self)
+        exitAction3.triggered.connect(self.showNameDialog)
+        toolbar.addAction(exitAction3)
         
         #MENU
         loadAction = QtGui.QAction(QtGui.QIcon(), 'Load file', self)
@@ -48,7 +51,9 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle('Grapher Pro 8000')
         self.show()
        
-    def showNameDialog(self,type):
+    def showNameDialog(self):
+        
+        sender = self.sender()
         
         self.button = QtGui.QPushButton('Dialog', self)
         self.button.move(20, 20)
@@ -57,11 +62,17 @@ class MainWindow(QtGui.QMainWindow):
         self.input = QtGui.QLineEdit(self)
         self.input.move(130, 22)
         
-        text, ok = QtGui.QInputDialog.getText(self, 'Input Dialog', 'Enter X-title:')
-        
-        if ok:
-            self.graphWidget.set_xname(str(text))
+        if sender.text()=="X-Title":
+            text, ok = QtGui.QInputDialog.getText(self, 'Input Dialog', 'Enter X-title:')
+            
+            if ok:
+                self.graphWidget.set_xname(str(text))
              
+        if sender.text()=="Y-Title":
+            text, ok = QtGui.QInputDialog.getText(self, 'Input Dialog', 'Enter Y-title:')
+            
+            if ok:
+                self.graphWidget.set_yname(str(text))
         
     def set_graph(self,file):
         self.graphWidget = qpen(file) #'data_ok2.csv'

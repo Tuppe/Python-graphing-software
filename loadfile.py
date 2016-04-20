@@ -4,6 +4,9 @@ Created on 25.2.2016
 @author: Tuomas
 '''
 
+from PyQt4 import QtGui
+from random import randint
+
 class Data(object):
     
     
@@ -14,7 +17,6 @@ class Data(object):
     def load(self, path):
         
         if path==0:
-            file.close()
             return 0
         try:
             file = open(path)
@@ -39,7 +41,7 @@ class Data(object):
                     newlist.append(data[x][y]) #axis name
                 else:
                     if type=="LINE":
-                        if data[x][y].isnumeric()==1:
+                        if data[x][y].lstrip("-+").isnumeric()==1:
                             newlist.append(int(data[x][y])) #valid data
                         else:
                             file.close()
@@ -52,7 +54,6 @@ class Data(object):
                             newlist.append(int(data[x][y])) #valid data
                         
                         
-        
             newline=Line(newlist)
             store.append(newline)
             newlist=[]
@@ -79,7 +80,7 @@ class Line:
         #self._max=max(datalist)
         #self._min=min(datalist)
         
-        
+    
     def get_data(self):
         return self._data
     
