@@ -30,13 +30,13 @@ class MainWindow(QtGui.QMainWindow):
         toolbar = self.addToolBar('Exit')
         toolbar.addAction(exitAction)
         
-        exitAction2 = QtGui.QAction(QtGui.QIcon(''), 'X-Title', self)
-        exitAction2.triggered.connect(self.showNameDialog)
-        toolbar.addAction(exitAction2)
+        xtitle = QtGui.QAction(QtGui.QIcon(''), 'X-Title', self)
+        xtitle.triggered.connect(self.showNameDialog)
+        toolbar.addAction(xtitle)
         
-        exitAction3 = QtGui.QAction(QtGui.QIcon(''), 'Y-Title', self)
-        exitAction3.triggered.connect(self.showNameDialog)
-        toolbar.addAction(exitAction3)
+        ytitle = QtGui.QAction(QtGui.QIcon(''), 'Y-Title', self)
+        ytitle.triggered.connect(self.showNameDialog)
+        toolbar.addAction(ytitle)
         
         xgrid = QtGui.QAction(QtGui.QIcon(''), 'X-Grid', self)
         xgrid.triggered.connect(self.showNameDialog)
@@ -96,7 +96,7 @@ class MainWindow(QtGui.QMainWindow):
         datatype=somedata.load(file)
         
         self.graphWidget = qpen(somedata,datatype)
-        #self.graphWidget = LegendWidget()
+        self.legendWidget = LegendWidget(somedata,datatype)
         
         top = QtGui.QFrame(self)
         top.setFrameShape(QtGui.QFrame.StyledPanel)
@@ -106,12 +106,14 @@ class MainWindow(QtGui.QMainWindow):
 
         splitter1 = QtGui.QSplitter(QtCore.Qt.Horizontal)
         splitter1.addWidget(top)
+        splitter1.addWidget(self.legendWidget)
+        splitter1.setSizes([180,1])
 
         splitter2 = QtGui.QSplitter(QtCore.Qt.Vertical)
         splitter2.addWidget(self.graphWidget)
         splitter2.addWidget(splitter1)
         splitter2.addWidget(bottom)
-        splitter2.setSizes([80,20])
+        splitter2.setSizes([100,20])
         
         self.setCentralWidget(splitter2)
         
@@ -128,7 +130,6 @@ class MainWindow(QtGui.QMainWindow):
 def main():
     app = QtGui.QApplication(sys.argv)
     ex = MainWindow()
-    #print(ex.showDialog())
     sys.exit(app.exec_())
     
 

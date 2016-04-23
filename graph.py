@@ -361,8 +361,6 @@ class qpen(QtGui.QWidget):
         self.rotated_text(qp,15,self.height()/2,self.ytitle)
         
         
-        
-        
     def rotated_text(self,qp,x,y,text):
         qp.translate(x,y)
         qp.rotate(-90)

@@ -81,9 +81,8 @@ class Line:
     def __init__(self, datalist):
         self._data=datalist
         self._name=datalist[0]
-        #print(datalist[0])
         datalist.pop(0)
-        #print(datalist)
+        #print(len(self._name))
         #self._max=max(datalist)
         #self._min=min(datalist)
     
