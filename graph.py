@@ -8,30 +8,52 @@ from loadfile import Data
 
 class qpen(QtGui.QWidget):
     
-    def __init__(self,path):
+    def __init__(self,data,type):
         super().__init__()
         
         self.initUI()
         self.xscale=50
         self.ygridsize=25
         self.xgridsize=25
+        self.showxgrid=1
+        self.showygrid=1
         self.yscale=1
         self.leftmargin=50
         self.lowmargin=40
         self.yoffset=0
         self.xoffset=1
-        self.path=path
-        self.xtitle=''
-        self.ytitle=''
-        self.somedata=0
-        self.datatype=0
-        self.loadData()
+        self.somedata=data
+        self.datatype=type
+        self.xtitle=str(self.somedata.get_data(0).get_name())
+        self.ytitle=str(self.somedata.get_data(1).get_name())
+        
+        self.min_xscale=1
+        self.min_yscale=0.1
+        self.min_ygridsize=1
+        self.min_xgridsize=1
+        
+        self.max_xscale=200
+        self.max_yscale=10
+        self.max_ygridsize=500
+        self.max_xgridsize=50
+        
+        
+        if self.datatype=='BAR':
+            self.lowmargin=self.somedata.get_maxname()*6
         
     def initUI(self):
         grid = QtGui.QGridLayout()
         self.setLayout(grid)
         self.show()
     
+    def toggle_ygrid(self):
+        self.showxgrid=1-self.showxgrid
+        self.update()
+        
+    def toggle_xgrid(self):
+        self.showygrid=1-self.showygrid
+        self.update()
+        
     def set_yname(self,yname):
         self.ytitle=yname
         
@@ -55,11 +77,11 @@ class qpen(QtGui.QWidget):
         
     def wheelEvent(self, event):
         super(qpen, self).wheelEvent(event)
-        if (event.delta()>0):
+        if event.delta()>0: #wheel up
             self.yscale+=0.2
             self.xscale+=5
-        if (event.delta()<0):
-            if self.yscale>.6 and self.xscale>.2:
+        if event.delta()<0: #wheel down
+            if self.yscale>.1 and self.xscale>10:
                 self.yscale-=0.2
                 self.xscale-=5
             
@@ -79,36 +101,46 @@ class qpen(QtGui.QWidget):
             
         if self.button==4: #middle click
             self.xgridsize-=int((x-self.xstart)/2)
-            if self.xgridsize<5:
-                self.xgridsize=5
             self.ygridsize-=int((y-self.ystart)/2)
-            if self.ygridsize<5:
-                self.ygridsize=5
+            
+            #set limits
+            if self.xgridsize<self.min_xgridsize:
+                self.xgridsize=self.min_xgridsize
+            if self.ygridsize<self.min_ygridsize:
+                self.ygridsize=self.min_ygridsize
+                
+            if self.xgridsize>self.max_xgridsize:
+                self.xgridsize=self.max_xgridsize
+            if self.ygridsize>self.max_ygridsize:
+                self.ygridsize=self.max_ygridsize
                 
         if self.button==2: #mouse2
-            self.xscale+=(x-self.xstart)/5
-            if self.xscale<5:
-                self.xscale=5
-            self.yscale-=(y-self.ystart)/150
-            if self.yscale<1:
-                self.yscale=1
+            self.xscale+=(x-self.xstart)/15
+            self.yscale-=(y-self.ystart)/100
+            
+            #set limits
+            if self.xscale<self.min_xscale:
+                self.xscale=self.min_xscale
+            if self.yscale<self.min_yscale:
+                self.yscale=self.min_yscale
+                
+            if self.xscale>self.max_xscale:
+                self.xscale=self.max_xscale
+            if self.yscale>self.max_yscale:
+                self.yscale=self.max_yscale
+            
+            #change margins when text rotates
+            if self.xscale<self.somedata.get_maxname()*6:
+                self.lowmargin=self.somedata.get_maxname()*6
+                self.update()
+            else:
+                self.lowmargin=40
         
         #reset offset counter
         self.ystart=y
         self.xstart=x
         self.update() #update graph
     
-    def loadData(self):
-        
-        self.somedata=Data()
-        self.datatype=self.somedata.load(self.path)
-        
-        if self.datatype==0: #corrupted data file
-            return 0
-        
-        self.xtitle=str(self.somedata.get_data(0).get_name())
-        self.ytitle=str(self.somedata.get_data(1).get_name())
-        
     def paintEvent(self, e):
 
         #self.loadData()
@@ -139,18 +171,16 @@ class qpen(QtGui.QWidget):
         
     def drawGraphs(self, qp, data):
         
+        #insert data into list
         lines=[]
-        
         for x in range(0,data.get_length()):
             lines.append(data.get_data(x).get_data())
         
         time=lines[0]
-        line=data.get_data(1).get_data()
-        avg=data.get_data(1).get_avg()
         
         #Draw line graph from X and Y coordinates
         for y in range(1,data.get_length()):
-            color=QtGui.QColor.fromHsvF(1/data.get_length()*y,0.9,0.9,0.9)
+            color=QtGui.QColor.fromHsvF(1/data.get_length()*y,0.9,0.9,0.9) #generate colors
             pen = QtGui.QPen(color, 2, QtCore.Qt.SolidLine)
             qp.setPen(pen)
             
@@ -166,19 +196,20 @@ class qpen(QtGui.QWidget):
         pen = QtGui.QPen(QtCore.Qt.black, 5, QtCore.Qt.SolidLine)
         qp.setPen(pen)
         
-        time=data.get_data(0).get_data()
-        line=data.get_data(1).get_data()
+        #insert data into list
+        bars=[]
+        for x in range(0,data.get_length()):
+            bars.append(data.get_data(x).get_data())
         
-        avg=data.get_data(1).get_avg()
+        barcount=len(bars)-1
         
-        for p in range(0,3):
-            #Draw bars
-            for x in range(0,len(time)):
+        #Draw bars
+        for p in range(0,barcount):
+            for x in range(0,len(bars[0])):
                 x1=x*self.xscale+self.leftmargin+self.xoffset
                 y1=self.height()-self.lowmargin+self.yoffset
-                barw=self.xscale-2
-                
-                qp.fillRect(x1+1,y1,barw,-line[x]*self.yscale,QtCore.Qt.blue)
+                barw=self.xscale/barcount-2
+                qp.fillRect(x1+1+p*self.xscale/barcount,y1,barw,-bars[p+1][x]*self.yscale,QtGui.QColor.fromHsvF(1/barcount*p,0.9,0.9,0.9))
         
         
     def drawPie(self,qp,data):
@@ -189,17 +220,17 @@ class qpen(QtGui.QWidget):
         piesum=0
         piesize=self.height()-80
         
-        #get data and normalize it to 5760
+        #get data and normalize it with 5760
         for x in range(0,data.get_data(1).get_len()):
             piedata.append(data.get_data(1).get_data()[x]/datalen*5760)
         
         piedata.sort(reverse=True)
         
-        #draw pie
+        #Draw pie
         for p in range(0,21):
             for x in range(0,data.get_data(1).get_len()):
                 if p==20:
-                    color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*x,0.9,0.9,1)
+                    color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*x,0.9,0.9,1) #generate colors
                     
                     qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
                     qp.setFont(qf)
@@ -209,7 +240,8 @@ class qpen(QtGui.QWidget):
                     qp.fillRect(self.width()/2,10+30*x,30,20,color)
                 else:
                     color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*x,0.9,0.5,1)
-                    
+                
+                #draw pie without outlines
                 qp.setBrush(color)
                 qp.setPen(color)
                 qp.drawPie(piesize/5,self.height()/2-piesize/3-p,piesize,piesize/2,piesum,piedata[x])
@@ -228,88 +260,108 @@ class qpen(QtGui.QWidget):
     def drawGrid(self, qp, data):
         
         time=data.get_data(0)
-        line=data.get_data(1)
         
         pen = QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.DotLine)
         qp.setPen(pen)
         
         xscale=self.xscale
+        yscale=self.yscale
         ygridsize=self.ygridsize
         
         starty=self.height()-self.lowmargin
         
         #drawing range
-        ymin=int(self.yoffset/ygridsize)
-        xmin=int(-self.xoffset/xscale)+1
-        ymax=int(self.yoffset/ygridsize)+int(self.height()/self.ygridsize)
-        xmax=int(-self.xoffset/xscale)+int(self.width()/self.xscale)
+        ymin=int(self.yoffset/(ygridsize*yscale))
+        ymax=int(self.yoffset/(ygridsize*yscale))+int(self.height()/(ygridsize*yscale))
         
+        xmin=int(-self.xoffset/xscale)+1
+        xmax=int(-self.xoffset/xscale)+int(self.width()/self.xscale)+1
+        
+        #fix draw range
         if self.xoffset>0:
-            xmin=xmin-1
+            xmin-=1
         
         if self.yoffset>0:
-            ymin=ymin+1
-            
-        ##LINES##
+            ymin+=1
+            ymax+=1
+        
+        ##--------------LINES------------##
+        
+        #reduce text with ydivider
+        ydivider=int(18/(yscale*ygridsize))
+        if ydivider<1:
+            ydivider=1
+        
+        xdivider=int(25/xscale)
+        if xdivider<1:
+            xdivider=1
+        
         #horizontal
-        for y in range(ymin,ymax):
-            x1=self.leftmargin
-            y1=starty-y*ygridsize*self.yscale+self.yoffset
-            x2=self.width()
-            y2=self.height()-self.lowmargin-y*ygridsize*self.yscale+self.yoffset
-            qp.drawLine(x1,y1,x2,y2)
-            qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.SolidLine))
-            qp.drawLine(x1-7,y1,self.leftmargin,y2) #draw short solid guidelines for values
-            qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.DotLine))
+        if self.showygrid==1:
+            for y in range(ymin,ymax):
+                x1=self.leftmargin
+                y1=starty-y*ygridsize*self.yscale+self.yoffset
+                x2=self.width()
+                y2=self.height()-self.lowmargin-y*ygridsize*self.yscale+self.yoffset
+                
+                if y%ydivider==0:
+                    qp.drawLine(x1,y1,x2,y2)
+                    qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.SolidLine))
+                    qp.drawLine(x1-7,y1,self.leftmargin,y2) #draw short solid guidelines for values
+                    qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.DotLine))
         
         #vertical
-        for x in range(xmin,xmax):
-            xpos=self.leftmargin+x*xscale+self.xoffset
-            qp.drawLine(xpos,starty,xpos,0)
-        
-        #draw sold axes
+        if self.showxgrid==1:
+            for x in range(xmin,xmax):
+                if x%xdivider==0:
+                    xpos=self.leftmargin+x*xscale+self.xoffset
+                    qp.drawLine(xpos,starty,xpos,0)
+            
+        #draw additional solid axes for nicer visual effect
         qp.setPen(QtGui.QPen(QtCore.Qt.black, 1.5, QtCore.Qt.SolidLine))
         qp.drawLine(self.leftmargin,starty,self.leftmargin,0) #left limiter
         
         qp.setPen(QtGui.QPen(QtCore.Qt.gray, 1.5, QtCore.Qt.SolidLine))
-        
-        if self.xoffset>0:
+        if self.xoffset>0: #don't draw when out of sight
             qp.drawLine(self.leftmargin+self.xoffset,starty,self.leftmargin+self.xoffset,0) #starting axis
         if self.yoffset<0:
             qp.drawLine(self.leftmargin,starty+self.yoffset,self.width(),self.height()-self.lowmargin+self.yoffset) #zero line
         qp.setPen(QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.DotLine))
         
-        ##TEXT##
-        #horizontal
+        ##------------TEXT------------##
         
+        #horizontal
         if self.datatype=='LINE':
             for x in range(xmin,xmax):
-                xpos=self.leftmargin+x*xscale+self.xoffset
-                qp.drawText(xpos,starty+20,str(x))
+                if x%xdivider==0:
+                    xpos=self.leftmargin+x*xscale+self.xoffset
+                    qp.drawText(xpos,starty+20,str(x))
+        
         
         if self.datatype=='BAR':
             if xmin<0:
                 xmin=0
             for x in range(xmin,len(time.get_data())):
                 xpos=self.leftmargin+x*xscale+self.xoffset
-                qp.drawText(xpos,starty+20,str(time.get_data()[x]))
-        
-        if self.ygridsize<10:
-            divider=2
-        else:
-            divider=1
+                if len(str(time.get_data()[x]))*5<self.xscale:
+                    qp.drawText(xpos,starty+20,str(time.get_data()[x]))
+                else:
+                    self.rotated_text(qp,xpos+10,self.height()-15,str(time.get_data()[x]))
             
         #vertical
         for y in range(ymin,ymax):
-            if y%divider==0:
-                qp.drawText(20,starty-y*ygridsize*self.yscale+self.yoffset+5,str(y*ygridsize))
+            if y%ydivider==0:
+                qp.drawText(18,starty-y*ygridsize*self.yscale+self.yoffset+5,str(y*ygridsize))
         
         
-        ##TITLES##
+        ##------------TITLES------------##
         #horizontal
         qp.drawText(self.width()/2,self.height()-5,self.xtitle)
         #vertical
         self.rotated_text(qp,15,self.height()/2,self.ytitle)
+        
+        
+        
         
     def rotated_text(self,qp,x,y,text):
         qp.translate(x,y)

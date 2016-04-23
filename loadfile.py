@@ -13,6 +13,7 @@ class Data(object):
     def __init__(self):
         self.data=0
         self.length=0
+        self._maxname=0
         
     def load(self, path):
         
@@ -21,7 +22,6 @@ class Data(object):
         try:
             file = open(path)
         except(FileNotFoundError):
-            file.close()
             return 0
         
         data=[]
@@ -32,6 +32,7 @@ class Data(object):
         
         store=[]
         newlist=[]
+        self._maxname=0
         
         type=data[len(data)-1][0]
         
@@ -42,22 +43,24 @@ class Data(object):
                 else:
                     if type=="LINE":
                         if data[x][y].lstrip("-+").isnumeric()==1:
-                            newlist.append(int(data[x][y])) #valid data
-                        else:
+                            newlist.append(int(data[x][y]))
+                        else: #invalid data
                             file.close()
-                            return 0 #invalid data
-                        
+                            return 0 
+                    
                     if type=="BAR" or type=="PIE":
                         if y==0:
-                            newlist.append(data[x][y]) #valid data
+                            newlist.append(data[x][y])
+                            if len(data[x][y])>self._maxname:
+                                self._maxname=len(data[x][y])
                         else:
-                            newlist.append(int(data[x][y])) #valid data
+                            newlist.append(int(data[x][y]))
                         
                         
             newline=Line(newlist)
             store.append(newline)
             newlist=[]
-            
+        
         self.data=store
         self.length=len(store)
         
@@ -70,16 +73,19 @@ class Data(object):
     def get_length(self):
         return self.length
     
+    def get_maxname(self):
+        return self._maxname
+    
 class Line:
     
     def __init__(self, datalist):
         self._data=datalist
         self._name=datalist[0]
+        #print(datalist[0])
         datalist.pop(0)
         #print(datalist)
         #self._max=max(datalist)
         #self._min=min(datalist)
-        
     
     def get_data(self):
         return self._data

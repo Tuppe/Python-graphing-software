@@ -6,6 +6,8 @@ import sys
 from PyQt4 import QtGui, QtCore
 
 from graph import qpen
+from widget import PieWidget, LegendWidget
+from loadfile import Data
 
 class MainWindow(QtGui.QMainWindow):
     
@@ -13,7 +15,8 @@ class MainWindow(QtGui.QMainWindow):
         super().__init__()
         #self.showDialog()
         self.graphWidget=0
-        self.set_graph('data_ok.csv')
+        self.path="data_ok2.csv"
+        self.set_graph(self.path)
         self.initUI()
     
     def initUI(self):
@@ -34,6 +37,14 @@ class MainWindow(QtGui.QMainWindow):
         exitAction3 = QtGui.QAction(QtGui.QIcon(''), 'Y-Title', self)
         exitAction3.triggered.connect(self.showNameDialog)
         toolbar.addAction(exitAction3)
+        
+        xgrid = QtGui.QAction(QtGui.QIcon(''), 'X-Grid', self)
+        xgrid.triggered.connect(self.showNameDialog)
+        toolbar.addAction(xgrid)
+        
+        ygrid = QtGui.QAction(QtGui.QIcon(''), 'Y-Grid', self)
+        ygrid.triggered.connect(self.showNameDialog)
+        toolbar.addAction(ygrid)
         
         #MENU
         loadAction = QtGui.QAction(QtGui.QIcon(), 'Load file', self)
@@ -74,8 +85,18 @@ class MainWindow(QtGui.QMainWindow):
             if ok:
                 self.graphWidget.set_yname(str(text))
         
+        if sender.text()=="X-Grid":
+            self.graphWidget.toggle_xgrid()
+                
+        if sender.text()=="Y-Grid":
+            self.graphWidget.toggle_ygrid()
+
     def set_graph(self,file):
-        self.graphWidget = qpen(file) #'data_ok2.csv'
+        somedata=Data()
+        datatype=somedata.load(file)
+        
+        self.graphWidget = qpen(somedata,datatype)
+        #self.graphWidget = LegendWidget()
         
         top = QtGui.QFrame(self)
         top.setFrameShape(QtGui.QFrame.StyledPanel)
