@@ -6,16 +6,14 @@ import sys
 from PyQt4 import QtGui, QtCore
 
 from graph import qpen
-from widget import PieWidget, LegendWidget
+from widget import PieWidget, LegendWidget, DataWidget
 from loadfile import Data
 
 class MainWindow(QtGui.QMainWindow):
     
     def __init__(self):
         super().__init__()
-        #self.showDialog()
-        self.graphWidget=0
-        self.path="data_ok2.csv"
+        self.path="data_ok.csv"
         self.set_graph(self.path)
         self.initUI()
     
@@ -30,26 +28,30 @@ class MainWindow(QtGui.QMainWindow):
         toolbar = self.addToolBar('Exit')
         toolbar.addAction(exitAction)
         
-        xtitle = QtGui.QAction(QtGui.QIcon(''), 'X-Title', self)
-        xtitle.triggered.connect(self.showNameDialog)
-        toolbar.addAction(xtitle)
-        
-        ytitle = QtGui.QAction(QtGui.QIcon(''), 'Y-Title', self)
-        ytitle.triggered.connect(self.showNameDialog)
-        toolbar.addAction(ytitle)
-        
-        xgrid = QtGui.QAction(QtGui.QIcon(''), 'X-Grid', self)
-        xgrid.triggered.connect(self.showNameDialog)
-        toolbar.addAction(xgrid)
-        
-        ygrid = QtGui.QAction(QtGui.QIcon(''), 'Y-Grid', self)
-        ygrid.triggered.connect(self.showNameDialog)
-        toolbar.addAction(ygrid)
+        self.addMenuItem('X-Title',"Change X title",toolbar)
+        self.addMenuItem('Y-Title',"Change Y title",toolbar)
+        self.addMenuItem('X-Grid',"Toggle X grid",toolbar)
+        self.addMenuItem('Y-Grid',"Toggle Y grid",toolbar)
         
         #MENU
+        self.legenddock=self.addDock("Legend", self.legendWidget)
+        self.datadock=self.addDock("Data", self.dataWidget)
+        
         loadAction = QtGui.QAction(QtGui.QIcon(), 'Load file', self)
         loadAction.setStatusTip('Load data')
         loadAction.triggered.connect(self.showFileDialog)
+        self.statusBar()
+        
+        dockAction = QtGui.QAction(QtGui.QIcon(), 'Show legend', self)
+        dockAction.setCheckable(1)
+        dockAction.setChecked(1)
+        dockAction.triggered.connect(self.toggleDock)
+        self.statusBar()
+        
+        dock2Action = QtGui.QAction(QtGui.QIcon(), 'Show data', self)
+        dock2Action.triggered.connect(self.toggleDock)
+        dock2Action.setCheckable(1)
+        dock2Action.setChecked(1)
         self.statusBar()
 
         menubar = self.menuBar()
@@ -57,11 +59,24 @@ class MainWindow(QtGui.QMainWindow):
         fileMenu.addAction(loadAction)
         fileMenu.addAction(exitAction)
         
+        windowMenu = menubar.addMenu('&Window')
+        windowMenu.addAction(dockAction)
+        windowMenu.addAction(dock2Action)
         
-        self.setGeometry(200, 200, 850, 550)
+        self.setCentralWidget(self.graphWidget)
+        
+        self.setGeometry(200, 200, 850, 650)
         self.setWindowTitle('Grapher Pro 8000')
         self.show()
-       
+        
+    
+    def toggleDock(self):
+        sender = self.sender()
+        if sender.text()=="Show legend":
+            self.legenddock.setVisible(1-self.legenddock.isVisible())
+        if sender.text()=="Show data":
+            self.datadock.setVisible(1-self.datadock.isVisible())
+    
     def showNameDialog(self):
         
         sender = self.sender()
@@ -95,29 +110,15 @@ class MainWindow(QtGui.QMainWindow):
         somedata=Data()
         datatype=somedata.load(file)
         
-        self.graphWidget = qpen(somedata,datatype)
+        if datatype=="PIE":
+            self.graphWidget = PieWidget(somedata)
+        else:
+            self.graphWidget = qpen(somedata,datatype)
+        
         self.legendWidget = LegendWidget(somedata,datatype)
-        
-        top = QtGui.QFrame(self)
-        top.setFrameShape(QtGui.QFrame.StyledPanel)
-
-        bottom = QtGui.QFrame(self)
-        bottom.setFrameShape(QtGui.QFrame.StyledPanel)
-
-        splitter1 = QtGui.QSplitter(QtCore.Qt.Horizontal)
-        splitter1.addWidget(top)
-        splitter1.addWidget(self.legendWidget)
-        splitter1.setSizes([180,1])
-
-        splitter2 = QtGui.QSplitter(QtCore.Qt.Vertical)
-        splitter2.addWidget(self.graphWidget)
-        splitter2.addWidget(splitter1)
-        splitter2.addWidget(bottom)
-        splitter2.setSizes([100,20])
-        
-        self.setCentralWidget(splitter2)
-        
-        self.graphWidget.show()
+        self.dataWidget = DataWidget(somedata,datatype)
+        self.setCentralWidget(self.graphWidget)
+        self.centralWidget().show()
         
         
     def showFileDialog(self):
@@ -126,6 +127,20 @@ class MainWindow(QtGui.QMainWindow):
             self.set_graph(fname)
             QtGui.QApplication.processEvents() #update GUI
 
+    def addDock(self,name,widget):
+        dock = QtGui.QDockWidget(name)
+        dock.setWidget(QtGui.QListWidget())
+        dock.setFeatures(QtGui.QDockWidget.DockWidgetFloatable | QtGui.QDockWidget.DockWidgetMovable)
+        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, dock)
+        dock.setWidget(widget)
+        return dock
+    
+    
+    def addMenuItem(self,name,statustip,toolbar):
+        item = QtGui.QAction(QtGui.QIcon(''), name, self)
+        item.triggered.connect(self.showNameDialog)
+        item.setStatusTip(statustip)
+        toolbar.addAction(item)
 
 def main():
     app = QtGui.QApplication(sys.argv)

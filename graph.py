@@ -10,6 +10,7 @@ class qpen(QtGui.QWidget):
     
     def __init__(self,data,type):
         super().__init__()
+        self.setMinimumSize(100, 100)
         
         self.initUI()
         self.xscale=50
@@ -27,7 +28,11 @@ class qpen(QtGui.QWidget):
         self.xtitle=str(self.somedata.get_data(0).get_name())
         self.ytitle=str(self.somedata.get_data(1).get_name())
         
-        self.min_xscale=1
+        if type=="LINE":
+            self.min_xscale=1
+        else:
+            self.min_xscale=10
+            
         self.min_yscale=0.1
         self.min_ygridsize=1
         self.min_xgridsize=1
@@ -36,6 +41,7 @@ class qpen(QtGui.QWidget):
         self.max_yscale=10
         self.max_ygridsize=500
         self.max_xgridsize=50
+        self.show()
         
         
         if self.datatype=='BAR':
@@ -180,7 +186,7 @@ class qpen(QtGui.QWidget):
         
         #Draw line graph from X and Y coordinates
         for y in range(1,data.get_length()):
-            color=QtGui.QColor.fromHsvF(1/data.get_length()*y,0.9,0.9,0.9) #generate colors
+            color=QtGui.QColor.fromHsvF(1/data.get_length()*(y-1),0.9,0.9,0.9) #generate colors
             pen = QtGui.QPen(color, 2, QtCore.Qt.SolidLine)
             qp.setPen(pen)
             
@@ -213,42 +219,6 @@ class qpen(QtGui.QWidget):
         
         
     def drawPie(self,qp,data):
-
-        datalen=data.get_data(1).get_sum()
-        
-        piedata=[]
-        piesum=0
-        piesize=self.height()-80
-        
-        #get data and normalize it with 5760
-        for x in range(0,data.get_data(1).get_len()):
-            piedata.append(data.get_data(1).get_data()[x]/datalen*5760)
-        
-        piedata.sort(reverse=True)
-        
-        #Draw pie
-        for p in range(0,21):
-            for x in range(0,data.get_data(1).get_len()):
-                if p==20:
-                    color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*x,0.9,0.9,1) #generate colors
-                    
-                    qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
-                    qp.setFont(qf)
-                    qp.setPen(QtCore.Qt.black)
-                    qp.drawText(self.width()/2+40,25+30*x,'{:.1f}'.format(piedata[x]/57.6)+" % - "+data.get_data(0).get_data()[x])
-                    
-                    qp.fillRect(self.width()/2,10+30*x,30,20,color)
-                else:
-                    color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*x,0.9,0.5,1)
-                
-                #draw pie without outlines
-                qp.setBrush(color)
-                qp.setPen(color)
-                qp.drawPie(piesize/5,self.height()/2-piesize/3-p,piesize,piesize/2,piesum,piedata[x])
-                
-                piesum+=piedata[x]
-                
-        
         #title label
         qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
         qp.setFont(qf)
