@@ -9,14 +9,16 @@ class PieWidget(QtGui.QWidget):
     def __init__(self,data):      
         super(PieWidget, self).__init__()
         self._size=200
-        self.setMinimumSize(self._size, self._size/2)
-        self.somedata=data
+        self.setMinimumSize(self._size, self._size)
+        self.data=data
+        self.piesize=self.height()-80
         
     def paintEvent(self, e):
       
         qp = QtGui.QPainter()
         qp.begin(self)
-        self.drawPie(qp,self.somedata)
+        qp.setRenderHint(QtGui.QPainter.Antialiasing,True) #smoothing
+        self.drawPie(qp,self.data)
         qp.end()
       
     def drawPie(self,qp,data):
@@ -25,7 +27,6 @@ class PieWidget(QtGui.QWidget):
         
         piedata=[]
         piesum=0
-        piesize=self.height()-80
         thickness=20
         
         #get data for sorting and normalize it with 5760
@@ -38,13 +39,22 @@ class PieWidget(QtGui.QWidget):
         for p in range(0,thickness):
             for x in range(0,data.get_data(1).get_len()):
                 if p==thickness-1:
+                    #top of the pie
                     color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*x,0.9,0.9,1)
                 else:
-                    color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*x,0.9,0.5,1)
+                    #3D side with fade color
+                    color=QtGui.QColor.fromHsvF(1/data.get_data(1).get_len()*x,0.9,(0.3/thickness)*p+0.5,1)
                 
                 #draw pie without outlines
                 qp.setBrush(color)
                 qp.setPen(color)
+                
+                #push out small percentages from pie for readability
+                if (piedata[x]/57.6)<1:
+                    piesize=self.piesize+x
+                else:
+                    piesize=self.piesize
+                    
                 qp.drawPie(piesize/5,self.height()/2-piesize/3-p,piesize,piesize/2,piesum,piedata[x])
                 
                 piesum+=piedata[x]
@@ -58,7 +68,6 @@ class LegendWidget(QtGui.QWidget):
         self.type=type
         
     def paintEvent(self, e):
-        
         qp = QtGui.QPainter()
         qp.begin(self)
         self.drawLegend(qp,self.data)
@@ -85,6 +94,7 @@ class LegendWidget(QtGui.QWidget):
                 qp.setPen(QtCore.Qt.black)
                 qp.drawText(40,25+30*x,'{:.1f}'.format(piedata[x]/57.6)+" % - "+data.get_data(0).get_data()[x])
                 
+                #Color rectangles
                 qp.fillRect(0,10+30*x,30,20,color)
         
         if self.type=='LINE' or self.type=='BAR':
@@ -117,5 +127,23 @@ class DataWidget(QtGui.QWidget):
         qp.end()
           
     def drawData(self,qp,data):
-        print(data.get_data(1).get_avg())
+        print(data.get_data())
+        pass
                 
+class TextWidget(QtGui.QWidget):
+  
+    def __init__(self,path,text):
+        super(TextWidget, self).__init__()
+        self.setMinimumSize(100, 100)
+        self.path=path
+        self.text=text
+        
+    def paintEvent(self, e):
+        
+        qp = QtGui.QPainter()
+        qp.begin(self)
+        qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
+        qp.setFont(qf)
+        qp.setPen(QtCore.Qt.red)
+        qp.drawText(0,40,self.text.format(self.path))
+        qp.end()

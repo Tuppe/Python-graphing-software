@@ -6,50 +6,58 @@ from PyQt4 import QtGui, QtCore
 import random
 from loadfile import Data
 
-class qpen(QtGui.QWidget):
+class GraphWidget(QtGui.QWidget):
     
     def __init__(self,data,type):
         super().__init__()
         self.setMinimumSize(100, 100)
         
         self.initUI()
-        self.xscale=50
+        self.yoffset=0
+        self.xoffset=0
         self.ygridsize=25
         self.xgridsize=25
         self.showxgrid=1
         self.showygrid=1
+        self.xscale=1
         self.yscale=1
-        self.leftmargin=50
+        self.leftmargin=60
         self.lowmargin=40
-        self.yoffset=0
-        self.xoffset=1
         self.somedata=data
         self.datatype=type
         self.xtitle=str(self.somedata.get_data(0).get_name())
         self.ytitle=str(self.somedata.get_data(1).get_name())
         
+        
+        #set boundary values
+        self.min_ygridsize=1
+        self.max_ygridsize=500
+        
+        self.min_xgridsize=1
+        self.max_xgridsize=50
+        
+        self.min_yscale=0.01
+        self.max_yscale=10
+        
+        self.max_yoffset=90000
+        self.max_xoffset=9000
+        
+        #smaller minimum value for line graph
         if type=="LINE":
             self.min_xscale=1
         else:
             self.min_xscale=10
             
-        self.min_yscale=0.1
-        self.min_ygridsize=1
-        self.min_xgridsize=1
-        
         self.max_xscale=200
-        self.max_yscale=10
-        self.max_ygridsize=500
-        self.max_xgridsize=50
-        self.show()
-        
         
         if self.datatype=='BAR':
             self.lowmargin=self.somedata.get_maxname()*6
+            
+        self.set_initview()
+        
+        self.update()
         
     def initUI(self):
-        grid = QtGui.QGridLayout()
-        self.setLayout(grid)
         self.show()
     
     def toggle_ygrid(self):
@@ -65,51 +73,89 @@ class qpen(QtGui.QWidget):
         
     def set_xname(self,xname):
         self.xtitle=xname
+    
+    #adjust the default view according to min and max values
+    def set_initview(self):
+        self.yoffset=self.somedata.get_min()-20
+        self.yscale=400/(self.somedata.get_max()-self.yoffset)
+        self.yoffset=(self.somedata.get_min()-20)*self.yscale
+        
+        self.xoffset=1
+        self.xscale=800/(self.somedata.get_duration())
+        self.setLimits()
         
     def mousePressEvent(self, event):
-        super(qpen, self).mousePressEvent(event)
+        super(GraphWidget, self).mousePressEvent(event)
         self.button=event.button()
         #get global window position when mouse pressed
         self.xstart=event.globalX()
         self.ystart=event.globalY()
+        self.yoffstart=self.yoffset
+        self.yscalestart=self.yscale
     
     def mouseDoubleClickEvent(self, event):
-        super(qpen, self).mouseDoubleClickEvent(event)
+        super(GraphWidget, self).mouseDoubleClickEvent(event)
         #reset offset
-        self.yoffset=0
-        self.xoffset=0
-        self.yscale=1
+        self.set_initview()
+        
         self.update()
         
     def wheelEvent(self, event):
-        super(qpen, self).wheelEvent(event)
+        super(GraphWidget, self).wheelEvent(event)
+        
+        self.yoffstart=self.yoffset
+        self.yscalestart=self.yscale
+        
         if event.delta()>0: #wheel up
-            self.yscale+=0.2
-            self.xscale+=5
+            self.yscale+=self.yscale*0.05 #use linear scaling coefficient
+            self.xscale+=self.xscale*0.05
         if event.delta()<0: #wheel down
-            if self.yscale>.1 and self.xscale>10:
-                self.yscale-=0.2
-                self.xscale-=5
+            self.yscale-=self.yscale*0.05
+            self.xscale-=self.xscale*0.05
             
+        self.setLimits()
+        self.yoffset=(self.yoffstart/self.yscalestart)*self.yscale
         self.update() #update graph
             
         
     def mouseMoveEvent(self, event):
-        super(qpen, self).mouseMoveEvent(event)
-        
+        super(GraphWidget, self).mouseMoveEvent(event)
         #track mouse dragging
         x=event.globalX()
         y=event.globalY()
         
         if self.button==1: #mouse1
+            #drag view
             self.yoffset+=y-self.ystart
             self.xoffset+=x-self.xstart
             
         if self.button==4: #middle click
+            #change gridsize
             self.xgridsize-=int((x-self.xstart)/2)
             self.ygridsize-=int((y-self.ystart)/2)
             
-            #set limits
+        if self.button==2: #mouse2
+            #zoom
+            self.xscale+=(x-self.xstart)/15
+            self.yscale-=(y-self.ystart)/100
+            self.setLimits()
+            
+            #adjust the zooming to current offset
+            self.yoffset=(self.yoffstart/self.yscalestart)*self.yscale
+                                         
+            #change margins when text rotates
+            if self.xscale<self.somedata.get_maxname()*6:
+                self.lowmargin=self.somedata.get_maxname()*6
+                self.update()
+        
+        self.setLimits()
+        #reset offset counter
+        self.ystart=y
+        self.xstart=x
+        self.update() #update graph
+    
+    def setLimits(self):
+            #limit gridsize
             if self.xgridsize<self.min_xgridsize:
                 self.xgridsize=self.min_xgridsize
             if self.ygridsize<self.min_ygridsize:
@@ -119,12 +165,8 @@ class qpen(QtGui.QWidget):
                 self.xgridsize=self.max_xgridsize
             if self.ygridsize>self.max_ygridsize:
                 self.ygridsize=self.max_ygridsize
-                
-        if self.button==2: #mouse2
-            self.xscale+=(x-self.xstart)/15
-            self.yscale-=(y-self.ystart)/100
             
-            #set limits
+            #limit scaling
             if self.xscale<self.min_xscale:
                 self.xscale=self.min_xscale
             if self.yscale<self.min_yscale:
@@ -134,18 +176,24 @@ class qpen(QtGui.QWidget):
                 self.xscale=self.max_xscale
             if self.yscale>self.max_yscale:
                 self.yscale=self.max_yscale
+                
+            #Limit for offset
+            if self.yoffset/self.yscale>self.max_yoffset:
+                self.yoffset=self.max_yoffset*self.yscale
             
-            #change margins when text rotates
-            if self.xscale<self.somedata.get_maxname()*6:
-                self.lowmargin=self.somedata.get_maxname()*6
-                self.update()
-            else:
+            if self.yoffset/self.yscale<-self.max_yoffset:
+                self.yoffset=-self.max_yoffset*self.yscale
+                
+            if self.xoffset/self.xscale>self.max_xoffset:
+                self.xoffset=self.max_xoffset*self.xscale
+            
+            if self.xoffset/self.xscale<-self.max_xoffset:
+                self.xoffset=-self.max_xoffset*self.xscale
+                
+            if self.lowmargin<40:
                 self.lowmargin=40
+                
         
-        #reset offset counter
-        self.ystart=y
-        self.xstart=x
-        self.update() #update graph
     
     def paintEvent(self, e):
 
@@ -242,7 +290,7 @@ class qpen(QtGui.QWidget):
         
         #drawing range
         ymin=int(self.yoffset/(ygridsize*yscale))
-        ymax=int(self.yoffset/(ygridsize*yscale))+int(self.height()/(ygridsize*yscale))
+        ymax=int(self.yoffset/(ygridsize*yscale))+int(self.height()/(ygridsize*yscale))+1
         
         xmin=int(-self.xoffset/xscale)+1
         xmax=int(-self.xoffset/xscale)+int(self.width()/self.xscale)+1
@@ -313,7 +361,9 @@ class qpen(QtGui.QWidget):
                 xmin=0
             for x in range(xmin,len(time.get_data())):
                 xpos=self.leftmargin+x*xscale+self.xoffset
-                if len(str(time.get_data()[x]))*5<self.xscale:
+                
+                #rotate text if it doesn't fit
+                if len(str(time.get_data()[x]))*5.5<self.xscale:
                     qp.drawText(xpos,starty+20,str(time.get_data()[x]))
                 else:
                     self.rotated_text(qp,xpos+10,self.height()-15,str(time.get_data()[x]))
@@ -343,6 +393,6 @@ class qpen(QtGui.QWidget):
 if __name__ == '__main__':
     
     app = QtGui.QApplication(sys.argv)
-    exd = qpen("data_ok2.csv")
+    exd = GraphWidget("data_ok2.csv")
     sys.exit(app.exec_())
 '''

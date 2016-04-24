@@ -70,6 +70,44 @@ class Data(object):
     def get_data(self,index):
         return self.data[index]
         
+    def get_avg(self):
+        asum=0
+        
+        try:
+            for x in range(1,self.get_length()):
+                asum+=self.get_data(x).get_avg()
+        except(TypeError):
+            return -1
+        
+        return asum/(self.get_length()-1)
+    
+    def get_min(self):
+        min=self.get_data(1).get_min()
+        
+        try:
+            for x in range(1,self.get_length()):
+                if self.get_data(x).get_min()<min:
+                    min=self.get_data(x).get_min()
+        except(TypeError):
+            return -1
+        
+        return min
+    
+    def get_max(self):
+        max=self.get_data(1).get_max()
+        
+        try:
+            for x in range(1,self.get_length()):
+                if self.get_data(x).get_max()>max:
+                    max=self.get_data(x).get_max()
+        except(TypeError):
+            return -1
+        
+        return max
+    
+    def get_duration(self):
+        return self.get_data(0).get_len()
+    
     def get_length(self):
         return self.length
     
@@ -83,8 +121,8 @@ class Line:
         self._name=datalist[0]
         datalist.pop(0)
         #print(len(self._name))
-        #self._max=max(datalist)
-        #self._min=min(datalist)
+        self._max=max(datalist)
+        self._min=min(datalist)
     
     def get_data(self):
         return self._data
