@@ -13,65 +13,70 @@ class MainWindow(QtGui.QMainWindow):
     
     def __init__(self):
         super().__init__()
-        self.path="data_ok22.csv"
-        self.legendWidget=TextWidget(self.path,"")
-        self.dataWidget=TextWidget(self.path,"")
-        self.graphWidget=TextWidget(self.path,"")
+        self.piestyle=1
+        self.path="data_pie.csv"
+        self.path=0
         self.initUI()
-        self.set_graph(self.path)
+        #self.set_graph(self.path)
     
     def initUI(self):
-
-        #TOOLBAR
-        exitAction = QtGui.QAction(QtGui.QIcon('exit24.png'), 'Exit', self)
-        exitAction.setShortcut('Ctrl+Q')
-        exitAction.setStatusTip('Exit application')
-        exitAction.triggered.connect(self.close)
         
-        toolbar = self.addToolBar('Exit')
-        toolbar.addAction(exitAction)
+        #Setup initial empty view
+        self.legendWidget=TextWidget(self.path,"",QtCore.Qt.red)
+        self.dataWidget=TextWidget(self.path,"",QtCore.Qt.red)
+        self.graphWidget=TextWidget(self.path,"Start by loading data",QtCore.Qt.black)
+        self.setCentralWidget(self.graphWidget)
         
-        self.menu_xtitle=self.addMenuItem('X-Title',"Change X title",toolbar)
-        self.menu_ytitle=self.addMenuItem('Y-Title',"Change Y title",toolbar)
-        self.menu_xgrid=self.addMenuItem('X-Grid',"Toggle X grid",toolbar)
-        self.menu_ygrid=self.addMenuItem('Y-Grid',"Toggle Y grid",toolbar)
+        #------TOOLBAR------#
+        toolbar = self.addToolBar('Toolbar')
         
-        #MENU
+        #toolbar items
+        exitAction=self.addMenuItem('Exit','Exit application',toolbar,'exit24.png',self.close)
+        self.menu_xtitle=self.addMenuItem('X-Title',"Change X title",toolbar,'',self.showNameDialog)
+        self.menu_ytitle=self.addMenuItem('Y-Title',"Change Y title",toolbar,'',self.showNameDialog)
+        self.menu_xgrid=self.addMenuItem('X-Grid',"Toggle X grid",toolbar,'',self.showNameDialog)
+        self.menu_ygrid=self.addMenuItem('Y-Grid',"Toggle Y grid",toolbar,'',self.showNameDialog)
+        self.menu_3d=self.addMenuItem('3D',"Toggle 3D view",toolbar,'',self.showNameDialog)
+        
+        #-----DROPDOWN MENU-----#
+        menubar = self.menuBar()
+        
+        #Add menus
+        fileMenu = menubar.addMenu('&File')
+        windowMenu = menubar.addMenu('&Window')
+        
+        #add dropdown items
+        self.addDropdownItem('Load file',fileMenu, 0,self.showFileDialog)
+        self.addDropdownItem('Show legend',windowMenu, 1,self.toggleDock)
+        self.addDropdownItem('Show data',windowMenu, 1,self.toggleDock)
+        fileMenu.addAction(exitAction)
+        
+        #------DOCKS------#
         self.legenddock=self.addDock("Legend", self.legendWidget,QtCore.Qt.RightDockWidgetArea)
         self.datadock=self.addDock("Data", self.dataWidget,QtCore.Qt.BottomDockWidgetArea)
         
-        loadAction=self.addSelectionItem('Load file', 0)
-        loadAction.triggered.connect(self.showFileDialog)
-        dockAction=self.addSelectionItem('Show legend', 1)
-        dock2Action=self.addSelectionItem('Show data', 1)
-
-        menubar = self.menuBar()
-        fileMenu = menubar.addMenu('&File')
-        fileMenu.addAction(loadAction)
-        fileMenu.addAction(exitAction)
         
-        windowMenu = menubar.addMenu('&Window')
-        windowMenu.addAction(dockAction)
-        windowMenu.addAction(dock2Action)
-        
-        self.setCentralWidget(self.graphWidget)
-        
+        #Window properties
         self.setGeometry(200, 200, 1050, 650)
         self.setWindowTitle('Grapher Pro 8000')
         self.show()
         
     
+    #Toggle dock visibility when selected from menu
     def toggleDock(self):
-        sender = self.sender()
+        sender = self.sender() #get which button was pressed
+        
         if sender.text()=="Show legend":
             self.legenddock.setVisible(1-self.legenddock.isVisible())
         if sender.text()=="Show data":
             self.datadock.setVisible(1-self.datadock.isVisible())
     
+    #Show input dialog for changing the titles
     def showNameDialog(self):
         
         sender = self.sender()
         
+        #setup input dialog layout
         self.button = QtGui.QPushButton('Dialog', self)
         self.button.move(20, 20)
         self.button.clicked.connect(self.showNameDialog)
@@ -80,6 +85,7 @@ class MainWindow(QtGui.QMainWindow):
         self.input.move(130, 22)
         
         if sender.text()=="X-Title":
+            #get input text and selection from dialog
             text, ok = QtGui.QInputDialog.getText(self, 'Input Dialog', 'Enter X-title:')
             
             if ok:
@@ -91,45 +97,63 @@ class MainWindow(QtGui.QMainWindow):
             if ok:
                 self.graphWidget.set_yname(str(text))
         
+        #Toggle grid button action
         if sender.text()=="X-Grid":
             self.graphWidget.toggle_xgrid()
                 
         if sender.text()=="Y-Grid":
             self.graphWidget.toggle_ygrid()
+            
+        if sender.text()=="3D":
+            self.piestyle=1-self.piestyle
+            self.centralWidget().changeStyle(self.piestyle)
+            
 
+    #load new data and update menu, graph, legend and data
     def set_graph(self,file):
+        #load data
         newdata=Data()
         datatype=newdata.load(file)
         
+        #setup main graph
         if datatype=="PIE":
-            self.menu_xgrid.setVisible(0)
-            self.menu_ygrid.setVisible(0)
-            self.menu_xtitle.setVisible(0)
-            self.menu_ytitle.setVisible(0)
-            self.graphWidget = PieWidget(newdata)
+            self.graphWidget = PieWidget(newdata,self.piestyle)
+            self.set_toolbaritem_visibility(0,0,0,0,1)
         elif datatype=="LINE" or datatype=="BAR":
-            self.menu_xgrid.setVisible(1)
-            self.menu_ygrid.setVisible(1)
-            self.menu_xtitle.setVisible(1)
-            self.menu_ytitle.setVisible(1)
             self.graphWidget = GraphWidget(newdata,datatype)
+            self.set_toolbaritem_visibility(1,1,1,1,0)
         else:
-            self.graphWidget = TextWidget(file,'Data Error {:s}')
-        
-        self.legendWidget = LegendWidget(newdata,datatype)
-        self.dataWidget = DataWidget(newdata,datatype)
-        self.legenddock.setWidget(self.legendWidget)
+            self.graphWidget = TextWidget(file,'Data Error {:s}',QtCore.Qt.red)
+            self.set_toolbaritem_visibility(0,0,0,0,0)
+            self.setCentralWidget(self.graphWidget)
+            self.centralWidget().show()
+            return 0
         
         self.setCentralWidget(self.graphWidget)
         self.centralWidget().show()
         
+        #setup widgets
+        self.legendWidget = LegendWidget(newdata,datatype)
+        self.dataWidget = DataWidget(newdata,datatype)
+        self.legenddock.setWidget(self.legendWidget)
+        self.datadock.setWidget(self.dataWidget)
         
+    
+    #Show and hide toolbar items
+    def set_toolbaritem_visibility(self,xgrid,ygrid,xtitle,ytitle,view_3d):
+        self.menu_xgrid.setVisible(xgrid)
+        self.menu_ygrid.setVisible(ygrid)
+        self.menu_xtitle.setVisible(xtitle)
+        self.menu_ytitle.setVisible(ytitle)
+        self.menu_3d.setVisible(view_3d)
+    
+    #Show file browser window and get new data file name
     def showFileDialog(self):
         fname=QtGui.QFileDialog.getOpenFileName(self, 'Open file', '.')
         if fname!='': #if load cancelled
             self.set_graph(fname)
             QtGui.QApplication.processEvents() #update GUI
-
+    
     def addDock(self,name,widget,area):
         dock = QtGui.QDockWidget(name)
         dock.setWidget(QtGui.QListWidget())
@@ -138,21 +162,23 @@ class MainWindow(QtGui.QMainWindow):
         dock.setWidget(widget)
         return dock
     
-    def addSelectionItem(self,name,checkable):
-        dockAction = QtGui.QAction(QtGui.QIcon(), name, self)
-        dockAction.setCheckable(checkable)
-        dockAction.setChecked(1)
-        dockAction.triggered.connect(self.toggleDock)
-        self.statusBar()
-        return dockAction
+    def addDropdownItem(self,name,menubar,checkable,action):
+        addAction = QtGui.QAction(QtGui.QIcon(), name, self) #init item
+        addAction.setCheckable(checkable)
+        addAction.setChecked(1)
+        addAction.triggered.connect(action) #set action when clicked
+        #self.statusBar()
+        menubar.addAction(addAction)
+        return addAction
     
-    def addMenuItem(self,name,statustip,toolbar):
-        item = QtGui.QAction(QtGui.QIcon(''), name, self)
-        item.triggered.connect(self.showNameDialog)
+    def addMenuItem(self,name,statustip,toolbar,icon,action):
+        item = QtGui.QAction(QtGui.QIcon(icon), name, self)
+        item.triggered.connect(action)
         item.setStatusTip(statustip)
         toolbar.addAction(item)
         return item
 
+#main loop
 def main():
     app = QtGui.QApplication(sys.argv)
     ex = MainWindow()

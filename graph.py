@@ -25,8 +25,8 @@ class GraphWidget(QtGui.QWidget):
         self.lowmargin=40
         self.somedata=data
         self.datatype=type
-        self.xtitle=str(self.somedata.get_data(0).get_name())
-        self.ytitle=str(self.somedata.get_data(1).get_name())
+        self.xtitle=str(self.somedata.get_datalist(0).get_name())
+        self.ytitle=str(self.somedata.get_datalist(1).get_name())
         
         
         #set boundary values
@@ -228,7 +228,7 @@ class GraphWidget(QtGui.QWidget):
         #insert data into list
         lines=[]
         for x in range(0,data.get_length()):
-            lines.append(data.get_data(x).get_data())
+            lines.append(data.get_datalist(x).get_data())
         
         time=lines[0]
         
@@ -253,7 +253,7 @@ class GraphWidget(QtGui.QWidget):
         #insert data into list
         bars=[]
         for x in range(0,data.get_length()):
-            bars.append(data.get_data(x).get_data())
+            bars.append(data.get_datalist(x).get_data())
         
         barcount=len(bars)-1
         
@@ -271,13 +271,13 @@ class GraphWidget(QtGui.QWidget):
         qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
         qp.setFont(qf)
         qp.setPen(QtGui.QPen(QtCore.Qt.black, 5, QtCore.Qt.SolidLine))
-        qp.drawText(self.width()/2,self.height()-5,str(data.get_data(1).get_name()))
+        qp.drawText(self.width()/2,self.height()-5,str(data.get_datalist(1).get_name()))
         
             
         
     def drawGrid(self, qp, data):
         
-        time=data.get_data(0)
+        time=data.get_datalist(0)
         
         pen = QtGui.QPen(QtCore.Qt.black, 1, QtCore.Qt.DotLine)
         qp.setPen(pen)

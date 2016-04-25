@@ -26,48 +26,62 @@ class Data(object):
         
         data=[]
         
+        #parse file
         for line in file:
             readline=line.strip().split(';')
             data.append(readline)
         
-        store=[]
+        full_list=[]
         newlist=[]
         self._maxname=0
         
-        type=data[len(data)-1][0]
+        #data layout:
+        #[len(data)-1][0] - last row first column: data type
+        #[0][y] - first row: graph names
+        #[x][0] - first column: vertical axle names
         
-        for y in range(0,len(data[0])):
-            for x in range(0,len(data)-1):
-                if x==0:
-                    newlist.append(data[x][y]) #axis name
-                else:
-                    if type=="LINE":
-                        if data[x][y].lstrip("-+").isnumeric()==1:
-                            newlist.append(int(data[x][y]))
-                        else: #invalid data
-                            file.close()
-                            return 0 
+        type=data[len(data)-1][0] #read data type from the last cell
+        
+        
+        if type=="LINE":
+            for y in range(0,len(data[0])):
+                newlist.append(data[0][y]) #graph names
+                
+                for x in range(1,len(data)-1):
+                    #check for invalid data
+                    if data[x][y].lstrip("-+").isnumeric()==0:
+                        file.close()
+                        return 0
                     
-                    if type=="BAR" or type=="PIE":
-                        if y==0:
-                            newlist.append(data[x][y])
-                            if len(data[x][y])>self._maxname:
-                                self._maxname=len(data[x][y])
-                        else:
-                            newlist.append(int(data[x][y]))
+                    newlist.append(int(data[x][y]))
                         
-                        
-            newline=Line(newlist)
-            store.append(newline)
-            newlist=[]
-        
-        self.data=store
-        self.length=len(store)
+                newline=Line(newlist)
+                full_list.append(newline)
+                newlist=[]
+            
+        if type=="BAR" or type=="PIE":
+            for y in range(0,len(data[0])):
+                newlist.append(data[0][y]) #graph names
+                
+                for x in range(1,len(data)-1):
+                    if y==0:
+                        newlist.append(data[x][0])
+                        if len(data[x][0])>self._maxname:
+                            self._maxname=len(data[x][0])
+                    else:
+                        newlist.append(int(data[x][y]))
+                
+                newline=Line(newlist)
+                full_list.append(newline)
+                newlist=[]
+            
+        self.data=full_list
+        self.length=len(full_list)
         
         file.close()
         return type
     
-    def get_data(self,index):
+    def get_datalist(self,index):
         return self.data[index]
         
     def get_avg(self):
@@ -75,38 +89,38 @@ class Data(object):
         
         try:
             for x in range(1,self.get_length()):
-                asum+=self.get_data(x).get_avg()
+                asum+=self.get_datalist(x).get_avg()
         except(TypeError):
             return -1
         
         return asum/(self.get_length()-1)
     
     def get_min(self):
-        min=self.get_data(1).get_min()
+        _min=self.get_datalist(1).get_min()
         
         try:
             for x in range(1,self.get_length()):
-                if self.get_data(x).get_min()<min:
-                    min=self.get_data(x).get_min()
+                if self.get_datalist(x).get_min()<_min:
+                    _min=self.get_datalist(x).get_min()
         except(TypeError):
             return -1
         
-        return min
+        return _min
     
     def get_max(self):
-        max=self.get_data(1).get_max()
+        _max=self.get_datalist(1).get_max()
         
         try:
             for x in range(1,self.get_length()):
-                if self.get_data(x).get_max()>max:
-                    max=self.get_data(x).get_max()
+                if self.get_datalist(x).get_max()>_max:
+                    _max=self.get_datalist(x).get_max()
         except(TypeError):
             return -1
         
-        return max
+        return _max
     
     def get_duration(self):
-        return self.get_data(0).get_len()
+        return self.get_datalist(0).get_len()
     
     def get_length(self):
         return self.length
@@ -120,7 +134,6 @@ class Line:
         self._data=datalist
         self._name=datalist[0]
         datalist.pop(0)
-        #print(len(self._name))
         self._max=max(datalist)
         self._min=min(datalist)
     
