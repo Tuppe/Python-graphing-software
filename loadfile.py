@@ -7,7 +7,7 @@ Created on 25.2.2016
 from PyQt4 import QtGui
 from random import randint
 
-class Data(object):
+class DataList(object):
     
     
     def __init__(self):
@@ -136,7 +136,14 @@ class Line:
         datalist.pop(0)
         self._max=max(datalist)
         self._min=min(datalist)
+        self._visible=1
     
+    def set_visibility(self,state):
+        self._visible=state
+    
+    def is_visible(self):
+        return self._visible
+        
     def get_data(self):
         return self._data
     

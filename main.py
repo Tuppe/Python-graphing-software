@@ -1,23 +1,19 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-
 import sys
 from PyQt4 import QtGui, QtCore
 
 from graph import GraphWidget
-from widget import PieWidget, LegendWidget, DataWidget, TextWidget
-from loadfile import Data
+from widget import PieWidget, DataWidget, TextWidget, LegendView, HelpWidget
+from loadfile import DataList
 
 class MainWindow(QtGui.QMainWindow):
     
     def __init__(self):
         super().__init__()
         self.piestyle=1
-        self.path="data_pie.csv"
-        self.path=0
+        self.path="data_graph.csv"
+        #self.path=0
         self.initUI()
-        #self.set_graph(self.path)
+        self.set_graph(self.path)
     
     def initUI(self):
         
@@ -37,6 +33,7 @@ class MainWindow(QtGui.QMainWindow):
         self.menu_xgrid=self.addMenuItem('X-Grid',"Toggle X grid",toolbar,'',self.showNameDialog)
         self.menu_ygrid=self.addMenuItem('Y-Grid',"Toggle Y grid",toolbar,'',self.showNameDialog)
         self.menu_3d=self.addMenuItem('3D',"Toggle 3D view",toolbar,'',self.showNameDialog)
+        self.set_toolbaritem_visibility(0,0,0,0,0)
         
         #-----DROPDOWN MENU-----#
         menubar = self.menuBar()
@@ -44,20 +41,25 @@ class MainWindow(QtGui.QMainWindow):
         #Add menus
         fileMenu = menubar.addMenu('&File')
         windowMenu = menubar.addMenu('&Window')
+        aboutMenu = menubar.addMenu('&About')
         
         #add dropdown items
         self.addDropdownItem('Load file',fileMenu, 0,self.showFileDialog)
         self.addDropdownItem('Show legend',windowMenu, 1,self.toggleDock)
         self.addDropdownItem('Show data',windowMenu, 1,self.toggleDock)
+        
         fileMenu.addAction(exitAction)
+        
+        self.addDropdownItem('Help',aboutMenu, 0,self.showNameDialog)
+        self.addDropdownItem('Info',aboutMenu, 0,self.showNameDialog)
         
         #------DOCKS------#
         self.legenddock=self.addDock("Legend", self.legendWidget,QtCore.Qt.RightDockWidgetArea)
         self.datadock=self.addDock("Data", self.dataWidget,QtCore.Qt.BottomDockWidgetArea)
-        
-        
+
         #Window properties
-        self.setGeometry(200, 200, 1050, 650)
+        self.setGeometry(600, 100, 1050, 650)
+        self.setMinimumSize(400, 400)
         self.setWindowTitle('Grapher Pro 8000')
         self.show()
         
@@ -77,12 +79,12 @@ class MainWindow(QtGui.QMainWindow):
         sender = self.sender()
         
         #setup input dialog layout
-        self.button = QtGui.QPushButton('Dialog', self)
-        self.button.move(20, 20)
-        self.button.clicked.connect(self.showNameDialog)
+        button = QtGui.QPushButton('Dialog', self)
+        button.move(20, 20)
+        button.clicked.connect(self.showNameDialog)
         
-        self.input = QtGui.QLineEdit(self)
-        self.input.move(130, 22)
+        rinput = QtGui.QLineEdit(self)
+        rinput.move(130, 22)
         
         if sender.text()=="X-Title":
             #get input text and selection from dialog
@@ -106,13 +108,24 @@ class MainWindow(QtGui.QMainWindow):
             
         if sender.text()=="3D":
             self.piestyle=1-self.piestyle
-            self.centralWidget().changeStyle(self.piestyle)
+            self.graphWidget.changeStyle(self.piestyle)
             
+        if sender.text()=="Help":
+            dialog = HelpWidget()
+            dialog.resize(500,200)
+            dialog.setWindowTitle("Help")
+            dialog.exec_()
+            
+        if sender.text()=="Info":
+            dialog = HelpWidget()
+            dialog.resize(500,200)
+            dialog.setWindowTitle("Info")
+            dialog.exec_()
 
     #load new data and update menu, graph, legend and data
     def set_graph(self,file):
         #load data
-        newdata=Data()
+        newdata=DataList()
         datatype=newdata.load(file)
         
         #setup main graph
@@ -133,8 +146,8 @@ class MainWindow(QtGui.QMainWindow):
         self.centralWidget().show()
         
         #setup widgets
-        self.legendWidget = LegendWidget(newdata,datatype)
-        self.dataWidget = DataWidget(newdata,datatype)
+        self.legendWidget = LegendView(newdata,datatype,self)
+        self.dataWidget = DataWidget(newdata,datatype,0)
         self.legenddock.setWidget(self.legendWidget)
         self.datadock.setWidget(self.dataWidget)
         
@@ -156,7 +169,6 @@ class MainWindow(QtGui.QMainWindow):
     
     def addDock(self,name,widget,area):
         dock = QtGui.QDockWidget(name)
-        dock.setWidget(QtGui.QListWidget())
         dock.setFeatures(QtGui.QDockWidget.DockWidgetFloatable | QtGui.QDockWidget.DockWidgetMovable)
         self.addDockWidget(area, dock)
         dock.setWidget(widget)

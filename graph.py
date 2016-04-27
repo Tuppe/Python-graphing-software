@@ -4,7 +4,6 @@ import sys
 from PyQt4 import QtGui, QtCore
 
 import random
-from loadfile import Data
 
 class GraphWidget(QtGui.QWidget):
     
@@ -76,9 +75,9 @@ class GraphWidget(QtGui.QWidget):
     
     #adjust the default view according to min and max values
     def set_initview(self):
-        self.yoffset=self.somedata.get_min()-20
-        self.yscale=400/(self.somedata.get_max()-self.yoffset)
-        self.yoffset=(self.somedata.get_min()-20)*self.yscale
+        self.yoffset=self.somedata.get_min()-100
+        self.yscale=300/(self.somedata.get_max()-self.yoffset)
+        self.yoffset=(self.somedata.get_min()-100)*self.yscale
         
         self.xoffset=1
         self.xscale=800/(self.somedata.get_duration())
@@ -234,16 +233,17 @@ class GraphWidget(QtGui.QWidget):
         
         #Draw line graph from X and Y coordinates
         for y in range(1,data.get_length()):
-            color=QtGui.QColor.fromHsvF(1/data.get_length()*(y-1),0.9,0.9,0.9) #generate colors
-            pen = QtGui.QPen(color, 2, QtCore.Qt.SolidLine)
-            qp.setPen(pen)
-            
-            for x in range(0,len(time)-1):
-                x1=time[x]*self.xscale+self.leftmargin+self.xoffset
-                y1=-lines[y][x]*self.yscale+self.height()-self.lowmargin+self.yoffset
-                x2=time[x+1]*self.xscale+self.leftmargin+self.xoffset
-                y2=-lines[y][x+1]*self.yscale+self.height()-self.lowmargin+self.yoffset
-                qp.drawLine(x1,y1,x2,y2)
+            if (data.get_datalist(y).is_visible()==1):
+                color=QtGui.QColor.fromHsvF(1/data.get_length()*(y-1),0.9,0.9,0.9) #generate colors
+                pen = QtGui.QPen(color, 2, QtCore.Qt.SolidLine)
+                qp.setPen(pen)
+                
+                for x in range(0,len(time)-1):
+                    x1=time[x]*self.xscale+self.leftmargin+self.xoffset
+                    y1=-lines[y][x]*self.yscale+self.height()-self.lowmargin+self.yoffset
+                    x2=time[x+1]*self.xscale+self.leftmargin+self.xoffset
+                    y2=-lines[y][x+1]*self.yscale+self.height()-self.lowmargin+self.yoffset
+                    qp.drawLine(x1,y1,x2,y2)
         
     def drawBars(self, qp, data):
         
@@ -260,20 +260,13 @@ class GraphWidget(QtGui.QWidget):
         #Draw bars
         for p in range(0,barcount):
             for x in range(0,len(bars[0])):
-                x1=x*self.xscale+self.leftmargin+self.xoffset
-                y1=self.height()-self.lowmargin+self.yoffset
-                barw=self.xscale/barcount-2
-                qp.fillRect(x1+1+p*self.xscale/barcount,y1,barw,-bars[p+1][x]*self.yscale,QtGui.QColor.fromHsvF(1/barcount*p,0.9,0.9,0.9))
+                if (data.get_datalist(p+1).is_visible()==1):
+                    x1=x*self.xscale+self.leftmargin+self.xoffset
+                    y1=self.height()-self.lowmargin+self.yoffset
+                    barw=self.xscale/barcount-2
+                    qp.fillRect(x1+1+p*self.xscale/barcount,y1,barw,-bars[p+1][x]*self.yscale,QtGui.QColor.fromHsvF(1/(barcount+1)*p,0.9,0.9,0.9))
         
         
-    def drawPie(self,qp,data):
-        #title label
-        qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
-        qp.setFont(qf)
-        qp.setPen(QtGui.QPen(QtCore.Qt.black, 5, QtCore.Qt.SolidLine))
-        qp.drawText(self.width()/2,self.height()-5,str(data.get_datalist(1).get_name()))
-        
-            
         
     def drawGrid(self, qp, data):
         
@@ -388,11 +381,3 @@ class GraphWidget(QtGui.QWidget):
         qp.rotate(90)
         qp.translate(-x,-y)
             
-            
-'''      
-if __name__ == '__main__':
-    
-    app = QtGui.QApplication(sys.argv)
-    exd = GraphWidget("data_ok2.csv")
-    sys.exit(app.exec_())
-'''
