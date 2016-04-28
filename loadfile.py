@@ -18,11 +18,11 @@ class DataList(object):
     def load(self, path):
         
         if path==0:
-            return 0
+            return 0 #cancel
         try:
             file = open(path)
         except(FileNotFoundError):
-            return 0
+            return -1 #not found
         
         data=[]
         
@@ -51,7 +51,7 @@ class DataList(object):
                     #check for invalid data
                     if data[x][y].lstrip("-+").isnumeric()==0:
                         file.close()
-                        return 0
+                        return -2 #data error
                     
                     newlist.append(int(data[x][y]))
                         
@@ -70,7 +70,7 @@ class DataList(object):
                             self._maxname=len(data[x][0])
                     else:
                         newlist.append(int(data[x][y]))
-                
+                        
                 newline=Line(newlist)
                 full_list.append(newline)
                 newlist=[]
@@ -182,6 +182,5 @@ class Line:
             return -1
         
         return asum/len(self._data)
-        
         
         

@@ -60,63 +60,20 @@ class PieWidget(QtGui.QWidget):
                 qp.setBrush(color)
                 qp.setPen(color)
                 piesize=self.height()-100
-                
-                qp.drawPie(piesize/5,thickness*5-p,piesize,piesize/halfer,piesum,piedata[x])
+                if (data.get_datalist(1).is_visible()):
+                    qp.drawPie(piesize/5,thickness*5-p,piesize,piesize/halfer,piesum,piedata[x])
                 
                 piesum+=piedata[x]
 
-class LegendWidget(QtGui.QWidget):
-  
-    def __init__(self,data,type):      
-        super(LegendWidget, self).__init__()
-        self.setMinimumSize(100, 100)
-        self.data=data
-        self.type=type
-        
-    def paintEvent(self, e):
-        qp = QtGui.QPainter()
-        qp.begin(self)
-        self.drawLegend(qp,self.data)
-        qp.end()
-          
-    def drawLegend(self,qp,data):
 
-        if self.type=='PIE':
-            datalen=data.get_datalist(1).get_sum()
-            piedata=[]
-            
-            #get data for sorting and normalize it to 5760
-            for x in range(0,data.get_datalist(1).get_len()):
-                piedata.append(data.get_datalist(1).get_data()[x]/datalen*5760)
-            
-            piedata.sort(reverse=True)
-            
-            #draw legend
-            for x in range(0,data.get_datalist(1).get_len()):
-                color=QtGui.QColor.fromHsvF(1/data.get_datalist(1).get_len()*x,0.9,0.9,1) #generate colors
-                
-                qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
-                qp.setFont(qf)
-                qp.setPen(QtCore.Qt.black)
-                qp.drawText(40,25+30*x,'{:.1f}'.format(piedata[x]/57.6)+" % - "+data.get_datalist(0).get_data()[x])
-                
-                #Color rectangles
-                qp.fillRect(0,10+30*x,30,20,color)
-        
-        if self.type=='LINE' or self.type=='BAR':
-            
-            #draw legend
-            for x in range(0,data.get_length()-1):
-                color=QtGui.QColor.fromHsvF(1/data.get_length()*x,0.9,0.9,1) #generate colors
-                
-                qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
-                qp.setFont(qf)
-                qp.setPen(QtCore.Qt.black)
-                qp.drawText(40,25+30*x,'{:s}'.format(data.get_datalist(x+1).get_name()))
-                
-                qp.fillRect(0,10+30*x,30,20,color)
-                
-    
+#Main class for Legend, store all tabs
+class DataTab(QtGui.QTabWidget):
+  
+    def __init__(self):
+        super(DataTab, self).__init__()
+        self.setMinimumSize(100, 100)
+
+#Class for data elements stored in tabs
 class DataWidget(QtGui.QWidget):
   
     def __init__(self,data,type,color):
@@ -137,11 +94,11 @@ class DataWidget(QtGui.QWidget):
     def drawData(self,qp,data):
         if self.color!=0:
             qp.fillRect(0,0,self.width(),5,self.color)
-        qp.drawText(10,20,'Average {:.1f}'.format(data.get_avg()))
-        qp.drawText(10,35,'Max {:.1f}'.format(data.get_max()))
-        qp.drawText(10,50,'Min {:.1f}'.format(data.get_min()))
+            qp.drawText(10,20,'Average {:.1f}'.format(data.get_avg()))
+            qp.drawText(10,35,'Max {:.1f}'.format(data.get_max()))
+            qp.drawText(10,50,'Min {:.1f}'.format(data.get_min()))
 
-
+#Class to display basic text
 class TextWidget(QtGui.QWidget):
   
     def __init__(self,path,text,color):
@@ -158,16 +115,20 @@ class TextWidget(QtGui.QWidget):
         qf = QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold)
         qp.setFont(qf)
         qp.setPen(self.color)
-        qp.drawText(0,40,self.text.format(self.path))
+        qp.drawText(20,40,self.text.format(self.path))
         qp.end()
 
 
-
-class HelpWidget(QtGui.QDialog):
+#Class to display about data
+class AboutWidget(QtGui.QDialog):
   
-    def __init__(self):      
-        super(HelpWidget, self).__init__()
-        self.setMinimumSize(200, 300)
+    def __init__(self,abouttype): 
+        super(AboutWidget, self).__init__()
+        self._type=abouttype
+        if self._type==1:
+            self.setMinimumSize(200, 300)
+        if self._type==2:
+            self.setMinimumSize(50, 100)
         
     def paintEvent(self, e):
         qp = QtGui.QPainter()
@@ -177,17 +138,24 @@ class HelpWidget(QtGui.QDialog):
           
     def drawHelp(self,qp):
         
-        qp.setPen(QtCore.Qt.black)
-        qp.setFont(QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold))
-        qp.drawText(30,30,'Mouse controls in the main graph window:')
-        qp.setFont(QtGui.QFont("AnyStyle", 10))
-        qp.drawText(30,50,'Left drag: Drag view')
-        qp.drawText(30,70,'Right drag: Zoom')
-        qp.drawText(30,90,'Center drag: Change grid size')
-        qp.drawText(30,110,'Double click: Reset view')
+        if self._type==1:
+            qp.setPen(QtCore.Qt.black)
+            qp.setFont(QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold))
+            qp.drawText(30,30,'Mouse controls in the main graph window:')
+            qp.setFont(QtGui.QFont("AnyStyle", 10))
+            qp.drawText(30,50,'Left drag: Drag view')
+            qp.drawText(30,70,'Right drag: Zoom')
+            qp.drawText(30,90,'Center drag: Change grid size')
+            qp.drawText(30,110,'Double click: Reset view')
+            qp.setFont(QtGui.QFont("AnyStyle", 10, QtGui.QFont.Bold))
+            qp.drawText(30,150,'Mouse controls in the legend window:')
+            qp.setFont(QtGui.QFont("AnyStyle", 10))
+            qp.drawText(30,170,'Left click: Disable/Enable')
+            qp.drawText(30,190,'Right click: Get data')
         
-        qp.drawText(30,150,'Click legend items to select individual graphs')
-                
+        if self._type==2:
+            qp.drawText(30,30,'Made by: Tuomas Manninen, 2016')
+            qp.drawText(30,50,'Wappu version')
         
         
 class LegendView(QtGui.QGraphicsView):
@@ -196,23 +164,43 @@ class LegendView(QtGui.QGraphicsView):
         self.scene = QtGui.QGraphicsScene(self)
         self.setBackgroundBrush(QtCore.Qt.lightGray)
         
-        #draw legend
-        for x in range(0,data.get_length()-1):
-            color=QtGui.QColor.fromHsvF(1/data.get_length()*x,0.9,0.9,1) #generate colors
+        
+        if datatype=='PIE':
+            datalen=data.get_datalist(1).get_sum()
+            piedata=[]
             
-            self.item = LegendItem(QtCore.QPoint(30,30*x),color,data.get_datalist(x+1),graphwidget)
-            self.scene.addItem(self.item)
+            #get data for sorting and normalize it to 5760
+            for x in range(0,data.get_datalist(1).get_len()):
+                piedata.append(data.get_datalist(1).get_data()[x]/datalen*5760)
+            
+            piedata.sort(reverse=True)
+            
+            #draw legend
+            for x in range(0,data.get_datalist(1).get_len()):
+                color=QtGui.QColor.fromHsvF(1/data.get_datalist(1).get_len()*x,0.9,0.9,1) #generate colors
+                
+                text='{:.1f}'.format(piedata[x]/57.6)+" % - "+data.get_datalist(0).get_data()[x]
+                self.item = LegendItem(QtCore.QPoint(30,30*x),color,data.get_datalist(1),text,graphwidget)
+                self.scene.addItem(self.item)
+        
+        if datatype=='LINE' or datatype=='BAR':
+            #draw legend
+            for x in range(0,data.get_length()-1):
+                color=QtGui.QColor.fromHsvF(1/data.get_length()*x,0.9,0.9,1) #generate colors
+                
+                self.item = LegendItem(QtCore.QPoint(30,30*x),color,data.get_datalist(x+1),data.get_datalist(x+1).get_name(),graphwidget)
+                self.scene.addItem(self.item)
         
         self.setScene(self.scene)
         
 
 class LegendItem(QtGui.QGraphicsItemGroup):
-    def __init__(self, pos,color,data,mainwindow):
+    def __init__(self, pos,color,data,text,mainwindow):
         QtGui.QGraphicsItemGroup.__init__(self)
         #self.setRect(pos.x(), pos.y(), 20, 20)
         qf = QtGui.QFont("AnyStyle", 10)
         rectitem = QtGui.QGraphicsRectItem(pos.x(), pos.y(), 25, 20)
-        textitem = QtGui.QGraphicsTextItem(data.get_name())
+        textitem = QtGui.QGraphicsTextItem(text)
         textitem.setPos(pos.x()+25, pos.y()-2)
         textitem.setFont(qf)
         self.addToGroup(rectitem)
@@ -242,21 +230,27 @@ class LegendItem(QtGui.QGraphicsItemGroup):
         self.setGraphicsEffect(None)
         QtGui.QGraphicsItemGroup.hoverLeaveEvent(self, event)
     
-    def mouseDoubleClickEvent(self, event):
-        self.setOpacity(1)
-        self.data.set_visibility(1)
-        self.mainwindow.centralWidget().update()
-        
-        dataWidget = DataWidget(self.data,0,QtGui.QColor.fromHsvF(self.color.hueF(),0.9,0.9,1))
-        dock=self.mainwindow.addDock(self.data.get_name(), dataWidget,QtCore.Qt.BottomDockWidgetArea)
-        dock.setFeatures(QtGui.QDockWidget.AllDockWidgetFeatures)
         
     def mousePressEvent(self, event):
-        if self.data.is_visible()==1:
-            self.setOpacity(0.35)
-            self.data.set_visibility(0)
-        else:
+        button=0
+        if (type(self.mainwindow.centralWidget()).__name__)!="PieWidget": #no effect for pie diagram
+            button=event.button()
+        
+        if button==1:
+            if self.data.is_visible()==1:
+                self.setOpacity(0.35)
+                self.data.set_visibility(0)
+            else:
+                self.setOpacity(1)
+                self.data.set_visibility(1)
+                
+            self.mainwindow.centralWidget().update()
+            
+        if button==2:
             self.setOpacity(1)
             self.data.set_visibility(1)
+            self.mainwindow.centralWidget().update()
+                
+            dataWidget = DataWidget(self.data,0,QtGui.QColor.fromHsvF(self.color.hueF(),0.9,0.9,1))
+            self.mainwindow.datadock.widget().addTab(dataWidget,self.data.get_name())
             
-        self.mainwindow.centralWidget().update()

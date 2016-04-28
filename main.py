@@ -2,7 +2,7 @@ import sys
 from PyQt4 import QtGui, QtCore
 
 from graph import GraphWidget
-from widget import PieWidget, DataWidget, TextWidget, LegendView, HelpWidget
+from widget import PieWidget, DataWidget, TextWidget, LegendView, AboutWidget, DataTab
 from loadfile import DataList
 
 class MainWindow(QtGui.QMainWindow):
@@ -10,7 +10,7 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self):
         super().__init__()
         self.piestyle=1
-        self.path="data_graph.csv"
+        self.path="data_pie2.csv"
         #self.path=0
         self.initUI()
         self.set_graph(self.path)
@@ -18,8 +18,8 @@ class MainWindow(QtGui.QMainWindow):
     def initUI(self):
         
         #Setup initial empty view
-        self.legendWidget=TextWidget(self.path,"",QtCore.Qt.red)
-        self.dataWidget=TextWidget(self.path,"",QtCore.Qt.red)
+        legendWidget=TextWidget(self.path,"",QtCore.Qt.red)
+        dataWidget=TextWidget(self.path,"",QtCore.Qt.red)
         self.graphWidget=TextWidget(self.path,"Start by loading data",QtCore.Qt.black)
         self.setCentralWidget(self.graphWidget)
         
@@ -52,10 +52,11 @@ class MainWindow(QtGui.QMainWindow):
         
         self.addDropdownItem('Help',aboutMenu, 0,self.showNameDialog)
         self.addDropdownItem('Info',aboutMenu, 0,self.showNameDialog)
+        self.statusBar() #status tip text shown bottom of screen
         
         #------DOCKS------#
-        self.legenddock=self.addDock("Legend", self.legendWidget,QtCore.Qt.RightDockWidgetArea)
-        self.datadock=self.addDock("Data", self.dataWidget,QtCore.Qt.BottomDockWidgetArea)
+        self.legenddock=self.addDock("Legend", legendWidget,QtCore.Qt.RightDockWidgetArea)
+        self.datadock=self.addDock("Data", dataWidget,QtCore.Qt.BottomDockWidgetArea)
 
         #Window properties
         self.setGeometry(600, 100, 1050, 650)
@@ -111,19 +112,25 @@ class MainWindow(QtGui.QMainWindow):
             self.graphWidget.changeStyle(self.piestyle)
             
         if sender.text()=="Help":
-            dialog = HelpWidget()
+            dialog = AboutWidget(1)
             dialog.resize(500,200)
             dialog.setWindowTitle("Help")
             dialog.exec_()
             
         if sender.text()=="Info":
-            dialog = HelpWidget()
+            dialog = AboutWidget(2)
             dialog.resize(500,200)
             dialog.setWindowTitle("Info")
             dialog.exec_()
 
     #load new data and update menu, graph, legend and data
     def set_graph(self,file):
+        
+        #delete old widgets
+        self.graphWidget.destroy()
+        self.legenddock.destroy()
+        self.datadock.destroy()
+        
         #load data
         newdata=DataList()
         datatype=newdata.load(file)
@@ -137,6 +144,7 @@ class MainWindow(QtGui.QMainWindow):
             self.set_toolbaritem_visibility(1,1,1,1,0)
         else:
             self.graphWidget = TextWidget(file,'Data Error {:s}',QtCore.Qt.red)
+            
             self.set_toolbaritem_visibility(0,0,0,0,0)
             self.setCentralWidget(self.graphWidget)
             self.centralWidget().show()
@@ -146,10 +154,13 @@ class MainWindow(QtGui.QMainWindow):
         self.centralWidget().show()
         
         #setup widgets
-        self.legendWidget = LegendView(newdata,datatype,self)
-        self.dataWidget = DataWidget(newdata,datatype,0)
-        self.legenddock.setWidget(self.legendWidget)
-        self.datadock.setWidget(self.dataWidget)
+        legendWidget = LegendView(newdata,datatype,self)
+        dataWidget = DataWidget(newdata,datatype,QtCore.Qt.white)
+        dataTab = DataTab()
+        dataTab.addTab(dataWidget, "Total")
+        
+        self.legenddock.setWidget(legendWidget)
+        self.datadock.setWidget(dataTab)
         
     
     #Show and hide toolbar items
@@ -168,10 +179,10 @@ class MainWindow(QtGui.QMainWindow):
             QtGui.QApplication.processEvents() #update GUI
     
     def addDock(self,name,widget,area):
-        dock = QtGui.QDockWidget(name)
+        dock = QtGui.QDockWidget(name) #create dock
         dock.setFeatures(QtGui.QDockWidget.DockWidgetFloatable | QtGui.QDockWidget.DockWidgetMovable)
-        self.addDockWidget(area, dock)
-        dock.setWidget(widget)
+        self.addDockWidget(area, dock) #add dock
+        dock.setWidget(widget) #insert widget to dock
         return dock
     
     def addDropdownItem(self,name,menubar,checkable,action):
@@ -179,7 +190,6 @@ class MainWindow(QtGui.QMainWindow):
         addAction.setCheckable(checkable)
         addAction.setChecked(1)
         addAction.triggered.connect(action) #set action when clicked
-        #self.statusBar()
         menubar.addAction(addAction)
         return addAction
     

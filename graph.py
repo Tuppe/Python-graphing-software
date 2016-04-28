@@ -84,7 +84,6 @@ class GraphWidget(QtGui.QWidget):
         self.setLimits()
         
     def mousePressEvent(self, event):
-        super(GraphWidget, self).mousePressEvent(event)
         self.button=event.button()
         #get global window position when mouse pressed
         self.xstart=event.globalX()
@@ -93,7 +92,6 @@ class GraphWidget(QtGui.QWidget):
         self.yscalestart=self.yscale
     
     def mouseDoubleClickEvent(self, event):
-        super(GraphWidget, self).mouseDoubleClickEvent(event)
         #reset offset
         self.set_initview()
         
@@ -118,7 +116,6 @@ class GraphWidget(QtGui.QWidget):
             
         
     def mouseMoveEvent(self, event):
-        super(GraphWidget, self).mouseMoveEvent(event)
         #track mouse dragging
         x=event.globalX()
         y=event.globalY()
@@ -348,7 +345,7 @@ class GraphWidget(QtGui.QWidget):
                     xpos=self.leftmargin+x*xscale+self.xoffset
                     qp.drawText(xpos,starty+20,str(x))
         
-        
+        #draw title texts for bar grid
         if self.datatype=='BAR':
             if xmin<0:
                 xmin=0
