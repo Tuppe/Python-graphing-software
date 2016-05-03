@@ -4,13 +4,9 @@ Created on 25.2.2016
 @author: Tuomas
 '''
 
-from PyQt4 import QtGui
-from random import randint
-
 class DataList(object):
-    
-    
     def __init__(self):
+        super(DataList,self).__init__()
         self.data=0
         self.length=0
         self._maxname=0
@@ -21,8 +17,8 @@ class DataList(object):
             return 0 #cancel
         try:
             file = open(path)
-        except(FileNotFoundError):
-            return -1 #not found
+        except(IOError):
+            return 0 #not found
         
         data=[]
         
@@ -41,17 +37,22 @@ class DataList(object):
         #[x][0] - first column: vertical axle names
         
         type=data[len(data)-1][0] #read data type from the last cell
-        
-        
+
+
         if type=="LINE":
             for y in range(0,len(data[0])):
                 newlist.append(data[0][y]) #graph names
-                
+
                 for x in range(1,len(data)-1):
                     #check for invalid data
-                    if data[x][y].lstrip("-+").isnumeric()==0:
+                    try: #Linux
+                        datachk=data[x][y].lstrip("-+").decode('utf-8').isnumeric()
+                    except(AttributeError): #Windows
+                        datachk=data[x][y].lstrip("-+").isnumeric()
+                    
+                    if datachk==0:
                         file.close()
-                        return -2 #data error
+                        return 0 #data error
                     
                     newlist.append(int(data[x][y]))
                         
@@ -59,7 +60,7 @@ class DataList(object):
                 full_list.append(newline)
                 newlist=[]
             
-        if type=="BAR" or type=="PIE":
+        elif type=="BAR" or type=="PIE":
             for y in range(0,len(data[0])):
                 newlist.append(data[0][y]) #graph names
                 
@@ -74,7 +75,10 @@ class DataList(object):
                 newline=Line(newlist)
                 full_list.append(newline)
                 newlist=[]
-            
+        else:
+            file.close()
+            return 0 #empty file
+        
         self.data=full_list
         self.length=len(full_list)
         

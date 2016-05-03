@@ -1,14 +1,11 @@
 
 
-import sys
 from PyQt4 import QtGui, QtCore
-
-import random
 
 class GraphWidget(QtGui.QWidget):
     
     def __init__(self,data,type):
-        super().__init__()
+        super(GraphWidget,self).__init__()
         self.setMinimumSize(100, 100)
         
         self.initUI()
@@ -76,11 +73,11 @@ class GraphWidget(QtGui.QWidget):
     #adjust the default view according to min and max values
     def set_initview(self):
         self.yoffset=self.somedata.get_min()-100
-        self.yscale=300/(self.somedata.get_max()-self.yoffset)
+        self.yscale=float(300)/(self.somedata.get_max()-self.yoffset)
         self.yoffset=(self.somedata.get_min()-100)*self.yscale
         
         self.xoffset=1
-        self.xscale=800/(self.somedata.get_duration())
+        self.xscale=float(800)/(self.somedata.get_duration())
         self.setLimits()
         
     def mousePressEvent(self, event):
@@ -132,8 +129,8 @@ class GraphWidget(QtGui.QWidget):
             
         if self.button==2: #mouse2
             #zoom
-            self.xscale+=(x-self.xstart)/15
-            self.yscale-=(y-self.ystart)/100
+            self.xscale+=float(x-self.xstart)/15
+            self.yscale-=float(y-self.ystart)/100
             self.setLimits()
             
             #adjust the zooming to current offset
@@ -221,17 +218,21 @@ class GraphWidget(QtGui.QWidget):
         
     def drawGraphs(self, qp, data):
         
+        datalen=data.get_length()
+
         #insert data into list
         lines=[]
-        for x in range(0,data.get_length()):
+        for x in range(0,datalen):
             lines.append(data.get_datalist(x).get_data())
         
         time=lines[0]
         
+
         #Draw line graph from X and Y coordinates
-        for y in range(1,data.get_length()):
+        for y in range(1,datalen):
             if (data.get_datalist(y).is_visible()==1):
-                color=QtGui.QColor.fromHsvF(1/data.get_length()*(y-1),0.9,0.9,0.9) #generate colors
+                color=QtGui.QColor.fromHsvF(float(1)/datalen*(y-1),0.9,0.9,0.9) #generate colors
+
                 pen = QtGui.QPen(color, 2, QtCore.Qt.SolidLine)
                 qp.setPen(pen)
                 
@@ -261,7 +262,7 @@ class GraphWidget(QtGui.QWidget):
                     x1=x*self.xscale+self.leftmargin+self.xoffset
                     y1=self.height()-self.lowmargin+self.yoffset
                     barw=self.xscale/barcount-2
-                    qp.fillRect(x1+1+p*self.xscale/barcount,y1,barw,-bars[p+1][x]*self.yscale,QtGui.QColor.fromHsvF(1/(barcount+1)*p,0.9,0.9,0.9))
+                    qp.fillRect(x1+1+p*self.xscale/barcount,y1,barw,-bars[p+1][x]*self.yscale,QtGui.QColor.fromHsvF(float(1)/(barcount+1)*p,0.9,0.9,0.9))
         
         
         
@@ -279,20 +280,15 @@ class GraphWidget(QtGui.QWidget):
         starty=self.height()-self.lowmargin
         
         #drawing range
-        ymin=int(self.yoffset/(ygridsize*yscale))
-        ymax=int(self.yoffset/(ygridsize*yscale))+int(self.height()/(ygridsize*yscale))+1
+        ymin=int(self.yoffset/(ygridsize*yscale))+1
+        ymax=int(self.yoffset/(ygridsize*yscale))+int(self.height()/(ygridsize*yscale))+5
         
         xmin=int(-self.xoffset/xscale)+1
         xmax=int(-self.xoffset/xscale)+int(self.width()/self.xscale)+1
-        
-        #fix draw range
-        if self.xoffset>0:
-            xmin-=1
-        
-        if self.yoffset>0:
-            ymin+=1
-            ymax+=1
-        
+
+        if self.yoffset<0:
+            ymin-=1
+
         ##--------------LINES------------##
         
         #reduce text with ydivider

@@ -1,9 +1,6 @@
 
-import sys
 from PyQt4 import QtGui, QtCore
 
-from PyQt4.QtGui import QGraphicsItem
-from graph import GraphWidget
 
 class PieWidget(QtGui.QWidget):
   
@@ -42,7 +39,7 @@ class PieWidget(QtGui.QWidget):
         
         #get data for sorting and normalize it with 5760
         for x in range(0,data.get_datalist(1).get_len()):
-            piedata.append(data.get_datalist(1).get_data()[x]/datalen*5760)
+            piedata.append(float(data.get_datalist(1).get_data()[x])/datalen*5760)
         
         piedata.sort(reverse=True)
         
@@ -51,10 +48,10 @@ class PieWidget(QtGui.QWidget):
             for x in range(0,data.get_datalist(1).get_len()):
                 if p==thickness-1:
                     #top of the pie
-                    color=QtGui.QColor.fromHsvF(1/data.get_datalist(1).get_len()*x,0.9,0.9,1)
+                    color=QtGui.QColor.fromHsvF(float(1)/data.get_datalist(1).get_len()*x,0.9,0.9,1)
                 else:
                     #3D side with fade color
-                    color=QtGui.QColor.fromHsvF(1/data.get_datalist(1).get_len()*x,0.9,(0.3/thickness)*p+0.5,1)
+                    color=QtGui.QColor.fromHsvF(float(1)/data.get_datalist(1).get_len()*x,0.9,(0.3/thickness)*p+0.5,1)
                 
                 #draw pie without outlines
                 qp.setBrush(color)
@@ -171,13 +168,13 @@ class LegendView(QtGui.QGraphicsView):
             
             #get data for sorting and normalize it to 5760
             for x in range(0,data.get_datalist(1).get_len()):
-                piedata.append(data.get_datalist(1).get_data()[x]/datalen*5760)
+                piedata.append(float(data.get_datalist(1).get_data()[x])/datalen*5760)
             
             piedata.sort(reverse=True)
             
             #draw legend
             for x in range(0,data.get_datalist(1).get_len()):
-                color=QtGui.QColor.fromHsvF(1/data.get_datalist(1).get_len()*x,0.9,0.9,1) #generate colors
+                color=QtGui.QColor.fromHsvF(float(1)/data.get_datalist(1).get_len()*x,0.9,0.9,1) #generate colors
                 
                 text='{:.1f}'.format(piedata[x]/57.6)+" % - "+data.get_datalist(0).get_data()[x]
                 self.item = LegendItem(QtCore.QPoint(30,30*x),color,data.get_datalist(1),text,graphwidget)
@@ -186,7 +183,7 @@ class LegendView(QtGui.QGraphicsView):
         if datatype=='LINE' or datatype=='BAR':
             #draw legend
             for x in range(0,data.get_length()-1):
-                color=QtGui.QColor.fromHsvF(1/data.get_length()*x,0.9,0.9,1) #generate colors
+                color=QtGui.QColor.fromHsvF(float(1)/data.get_length()*x,0.9,0.9,1) #generate colors
                 
                 self.item = LegendItem(QtCore.QPoint(30,30*x),color,data.get_datalist(x+1),data.get_datalist(x+1).get_name(),graphwidget)
                 self.scene.addItem(self.item)

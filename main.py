@@ -8,9 +8,9 @@ from loadfile import DataList
 class MainWindow(QtGui.QMainWindow):
     
     def __init__(self):
-        super().__init__()
+        super(MainWindow, self).__init__()
         self.piestyle=1
-        self.path="data_pie2.csv"
+        self.path="data_pie.csv"
         #self.path=0
         self.initUI()
         self.set_graph(self.path)
@@ -37,6 +37,7 @@ class MainWindow(QtGui.QMainWindow):
         
         #-----DROPDOWN MENU-----#
         menubar = self.menuBar()
+        menubar.setNativeMenuBar(False) #show menu in linux
         
         #Add menus
         fileMenu = menubar.addMenu('&File')
@@ -62,6 +63,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setGeometry(600, 100, 1050, 650)
         self.setMinimumSize(400, 400)
         self.setWindowTitle('Grapher Pro 8000')
+        self.setWindowIcon(QtGui.QIcon('icon.tif'))
         self.show()
         
     
