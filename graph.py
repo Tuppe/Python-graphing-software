@@ -2,6 +2,7 @@
 
 from PyQt4 import QtGui, QtCore
 
+#Class to draw graphics to graph view
 class GraphWidget(QtGui.QWidget):
     
     def __init__(self,data,type):
@@ -11,8 +12,8 @@ class GraphWidget(QtGui.QWidget):
         self.initUI()
         self.yoffset=0
         self.xoffset=0
-        self.ygridsize=25
-        self.xgridsize=25
+        self.ygridsize=1
+        self.xgridsize=1
         self.showxgrid=1
         self.showygrid=1
         self.xscale=1
@@ -33,7 +34,7 @@ class GraphWidget(QtGui.QWidget):
         self.max_xgridsize=50
         
         self.min_yscale=0.01
-        self.max_yscale=10
+        self.max_yscale=50
         
         self.max_yoffset=90000
         self.max_xoffset=9000
@@ -72,17 +73,20 @@ class GraphWidget(QtGui.QWidget):
     
     #adjust the default view according to min and max values
     def set_initview(self):
-        self.yoffset=self.somedata.get_min()-100
-        self.yscale=float(300)/(self.somedata.get_max()-self.yoffset)
-        self.yoffset=(self.somedata.get_min()-100)*self.yscale
+        #adjust gridsize to proper density
+        self.ygridsize=int((self.somedata.get_max()-self.somedata.get_min())/10)
+        
+        self.yoffset=self.somedata.get_min()
+        self.yscale=float(400)/(self.somedata.get_max()-self.yoffset) #adjust top side
+        self.yoffset=self.somedata.get_min()*self.yscale
         
         self.xoffset=1
-        self.xscale=float(800)/(self.somedata.get_duration())
-        self.setLimits()
+        self.xscale=float(800)/(self.somedata.get_duration()) #adjust right side
+        self.setLimits() #set autoscale within limits
         
     def mousePressEvent(self, event):
+        #store mouse position when first pressed
         self.button=event.button()
-        #get global window position when mouse pressed
         self.xstart=event.globalX()
         self.ystart=event.globalY()
         self.yoffstart=self.yoffset
@@ -95,19 +99,21 @@ class GraphWidget(QtGui.QWidget):
         self.update()
         
     def wheelEvent(self, event):
-        super(GraphWidget, self).wheelEvent(event)
-        
+        #store initial values
         self.yoffstart=self.yoffset
         self.yscalestart=self.yscale
         
         if event.delta()>0: #wheel up
-            self.yscale+=self.yscale*0.05 #use linear scaling coefficient
+            #scaling coefficient to adjust scaling speed to current scale
+            self.yscale+=self.yscale*0.05
             self.xscale+=self.xscale*0.05
         if event.delta()<0: #wheel down
             self.yscale-=self.yscale*0.05
             self.xscale-=self.xscale*0.05
             
-        self.setLimits()
+        self.setLimits() #check that within limits
+        
+        #adjust offset when zooming
         self.yoffset=(self.yoffstart/self.yscalestart)*self.yscale
         self.update() #update graph
             
@@ -189,15 +195,14 @@ class GraphWidget(QtGui.QWidget):
         
     
     def paintEvent(self, e):
-
-        #self.loadData()
         
         if self.datatype!=0:
+            #init painter
             qp = QtGui.QPainter()
             qp.begin(self)
             qp.setRenderHint(QtGui.QPainter.Antialiasing,True)
         
-            if self.datatype!="PIE":
+            if self.datatype!="PIE": #no grid for pie diagram
                 self.drawGrid(qp, self.somedata)
             
             qp.setClipRect(self.leftmargin,0,self.width(),self.height()-self.lowmargin) #drawing limits for margins
@@ -279,20 +284,24 @@ class GraphWidget(QtGui.QWidget):
         
         starty=self.height()-self.lowmargin
         
-        #drawing range
+        #calculate drawing range
         ymin=int(self.yoffset/(ygridsize*yscale))+1
         ymax=int(self.yoffset/(ygridsize*yscale))+int(self.height()/(ygridsize*yscale))+5
         
         xmin=int(-self.xoffset/xscale)+1
         xmax=int(-self.xoffset/xscale)+int(self.width()/self.xscale)+1
 
+        #correction to drawing range
         if self.yoffset<0:
             ymin-=1
 
+        if self.xoffset>0:
+            xmin-=1
+
         ##--------------LINES------------##
         
-        #reduce text with ydivider
-        ydivider=int(18/(yscale*ygridsize))
+        #reduce text if cannot fit
+        ydivider=int(22/(yscale*ygridsize))
         if ydivider<1:
             ydivider=1
         
@@ -335,21 +344,21 @@ class GraphWidget(QtGui.QWidget):
         ##------------TEXT------------##
         
         #horizontal
+        
         if self.datatype=='LINE':
             for x in range(xmin,xmax):
                 if x%xdivider==0:
                     xpos=self.leftmargin+x*xscale+self.xoffset
                     qp.drawText(xpos,starty+20,str(x))
         
-        #draw title texts for bar grid
         if self.datatype=='BAR':
             if xmin<0:
                 xmin=0
             for x in range(xmin,len(time.get_data())):
                 xpos=self.leftmargin+x*xscale+self.xoffset
                 
-                #rotate text if it doesn't fit
-                if len(str(time.get_data()[x]))*5.5<self.xscale:
+                #rotate text if cannot fit
+                if len(str(time.get_data()[x]))*9<self.xscale:
                     qp.drawText(xpos,starty+20,str(time.get_data()[x]))
                 else:
                     self.rotated_text(qp,xpos+10,self.height()-15,str(time.get_data()[x]))

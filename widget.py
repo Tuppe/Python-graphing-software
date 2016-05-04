@@ -152,9 +152,9 @@ class AboutWidget(QtGui.QDialog):
         
         if self._type==2:
             qp.drawText(30,30,'Made by: Tuomas Manninen, 2016')
-            qp.drawText(30,50,'Wappu version')
+            qp.drawText(30,50,'Wappu edition')
         
-        
+#Class to display legend menu graphics
 class LegendView(QtGui.QGraphicsView):
     def __init__(self,data,datatype,graphwidget):
         QtGui.QGraphicsView.__init__(self)
@@ -172,7 +172,7 @@ class LegendView(QtGui.QGraphicsView):
             
             piedata.sort(reverse=True)
             
-            #draw legend
+            #create all legend items with percentage data
             for x in range(0,data.get_datalist(1).get_len()):
                 color=QtGui.QColor.fromHsvF(float(1)/data.get_datalist(1).get_len()*x,0.9,0.9,1) #generate colors
                 
@@ -181,7 +181,7 @@ class LegendView(QtGui.QGraphicsView):
                 self.scene.addItem(self.item)
         
         if datatype=='LINE' or datatype=='BAR':
-            #draw legend
+            #create all legend items with data
             for x in range(0,data.get_length()-1):
                 color=QtGui.QColor.fromHsvF(float(1)/data.get_length()*x,0.9,0.9,1) #generate colors
                 
@@ -190,21 +190,26 @@ class LegendView(QtGui.QGraphicsView):
         
         self.setScene(self.scene)
         
-
+        
+#Class for each legend rectangle and text item
 class LegendItem(QtGui.QGraphicsItemGroup):
     def __init__(self, pos,color,data,text,mainwindow):
         QtGui.QGraphicsItemGroup.__init__(self)
-        #self.setRect(pos.x(), pos.y(), 20, 20)
         qf = QtGui.QFont("AnyStyle", 10)
+        
+        #create text and rectangles
         rectitem = QtGui.QGraphicsRectItem(pos.x(), pos.y(), 25, 20)
         textitem = QtGui.QGraphicsTextItem(text)
         textitem.setPos(pos.x()+25, pos.y()-2)
         textitem.setFont(qf)
+        
+        #combine to group
         self.addToGroup(rectitem)
         self.addToGroup(textitem)
         
-        self.rect=self.childItems()[0]
+        self.rect=self.childItems()[0] #this is rectangle in the group
         
+        #color the rectangle
         brush=QtGui.QBrush(color)
         pen=QtGui.QPen(QtGui.QColor.fromHsvF(color.hueF(),0.7,0.7,1))
         
@@ -217,6 +222,7 @@ class LegendItem(QtGui.QGraphicsItemGroup):
         self.mainwindow=mainwindow
 
     def hoverEnterEvent(self, event):
+        #effect when cursor over legend items
         effect = QtGui.QGraphicsDropShadowEffect()
         effect.setOffset(1,1)
         effect.setBlurRadius(6)
@@ -233,7 +239,7 @@ class LegendItem(QtGui.QGraphicsItemGroup):
         if (type(self.mainwindow.centralWidget()).__name__)!="PieWidget": #no effect for pie diagram
             button=event.button()
         
-        if button==1:
+        if button==1: #left button, hide graphs
             if self.data.is_visible()==1:
                 self.setOpacity(0.35)
                 self.data.set_visibility(0)
@@ -243,7 +249,7 @@ class LegendItem(QtGui.QGraphicsItemGroup):
                 
             self.mainwindow.centralWidget().update()
             
-        if button==2:
+        if button==2: #right button, open new info tab
             self.setOpacity(1)
             self.data.set_visibility(1)
             self.mainwindow.centralWidget().update()

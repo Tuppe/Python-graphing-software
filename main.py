@@ -10,10 +10,10 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.piestyle=1
-        self.path="data_pie.csv"
-        #self.path=0
+        #self.path="test/visual/data_bar.csv"
+        self.path=0
         self.initUI()
-        self.set_graph(self.path)
+        #self.set_graph(self.path)
     
     def initUI(self):
         
@@ -58,9 +58,12 @@ class MainWindow(QtGui.QMainWindow):
         #------DOCKS------#
         self.legenddock=self.addDock("Legend", legendWidget,QtCore.Qt.RightDockWidgetArea)
         self.datadock=self.addDock("Data", dataWidget,QtCore.Qt.BottomDockWidgetArea)
+        
+        self.legenddock.setMinimumSize(200, 100)
+        self.datadock.setMinimumSize(200, 100)
 
         #Window properties
-        self.setGeometry(600, 100, 1050, 650)
+        self.setGeometry(400, 100, 1150, 750)
         self.setMinimumSize(400, 400)
         self.setWindowTitle('Grapher Pro 8000')
         self.setWindowIcon(QtGui.QIcon('icon.tif'))
@@ -121,7 +124,7 @@ class MainWindow(QtGui.QMainWindow):
             
         if sender.text()=="Info":
             dialog = AboutWidget(2)
-            dialog.resize(500,200)
+            dialog.resize(400,100)
             dialog.setWindowTitle("Info")
             dialog.exec_()
 

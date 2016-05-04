@@ -1,9 +1,5 @@
-'''
-Created on 25.2.2016
 
-@author: Tuomas
-'''
-
+#Class for all data
 class DataList(object):
     def __init__(self):
         super(DataList,self).__init__()
@@ -132,6 +128,8 @@ class DataList(object):
     def get_maxname(self):
         return self._maxname
     
+    
+#Class for individual graphs
 class Line:
     
     def __init__(self, datalist):
