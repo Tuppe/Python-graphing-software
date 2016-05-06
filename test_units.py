@@ -4,23 +4,23 @@ from loadfile import DataList
 class Test(unittest.TestCase):
     
     def test_corrupted_file(self):
-        testdata=DataList()
-        ftype=testdata.load("Test/Error/NOTHING.csv")
+        ftype=DataList("Test/Error/NOTHING.csv").get_type()
         self.assertEqual(ftype,0,"Missing file didn't return 0")
-        ftype=testdata.load("Test/Error/error_letter.csv")
+        ftype=DataList("Test/Error/error_letter.csv").get_type()
         self.assertEqual(ftype,0,"Letters in file didn't return 0")
-        ftype=testdata.load("Test/Error/error_emptycell.csv")
+        ftype=DataList("Test/Error/error_emptycell.csv").get_type()
         self.assertEqual(ftype,0,"Empty cell in file didn't return 0")
-        ftype=testdata.load("Test/Error/error_missingline.csv")
+        ftype=DataList("Test/Error/error_missingline.csv").get_type()
         self.assertEqual(ftype,0,"Missing line in file didn't return 0")
-        ftype=testdata.load("Test/Error/error_emptyfile.csv")
+        ftype=DataList("Test/Error/error_emptyfile.csv").get_type()
         self.assertEqual(ftype,0,"Empty file didn't return 0")
-        ftype=testdata.load("Test/Error/error_extracell.csv")
+        ftype=DataList("Test/Error/error_extracell.csv").get_type()
         self.assertEqual(ftype,0,"Extra cell didn't return 0")
-
+        
     def test_datavalues(self):
-        testdata=DataList()
-        ftype=testdata.load("Test/Values/test_data.csv")
+        testdata=DataList("Test/Values/test_data.csv")
+        ftype=testdata.get_type()
+        self.assertNotEqual(ftype,0,"Cannot test values with corrupted in file")
         self.assertEqual(testdata.get_avg(),10,"Wrong total average")
         self.assertEqual(testdata.get_min(),-100,"Wrong total minimum")
         self.assertEqual(testdata.get_max(),100,"Wrong total maximum")

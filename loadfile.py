@@ -1,18 +1,21 @@
 
 #Class for all data
 class DataList(object):
-    def __init__(self):
+    def __init__(self,path):
         super(DataList,self).__init__()
         self.data=0
         self.length=0
+        self.type=0
         self._maxname=0
+        self.path=path
+        self.load()
         
-    def load(self, path):
+    def load(self):
         
-        if path==0:
+        if self.path==0:
             return 0 #cancel
         try:
-            file = open(path)
+            file = open(self.path)
         except(IOError):
             return 0 #not found
         
@@ -32,10 +35,10 @@ class DataList(object):
         #[0][y] - first row: graph names
         #[x][0] - first column: vertical axle names
         
-        type=data[len(data)-1][0] #read data type from the last cell
+        self.type=data[len(data)-1][0] #read data type from the last cell
 
 
-        if type=="LINE":
+        if self.type=="LINE":
             for y in range(0,len(data[0])):
                 newlist.append(data[0][y]) #graph names
 
@@ -48,15 +51,16 @@ class DataList(object):
                     
                     if datachk==0:
                         file.close()
-                        return 0 #data error
-                    
+                        self.type=0 #data error, reset type
+                        return 0
+                                        
                     newlist.append(int(data[x][y]))
                         
-                newline=Line(newlist)
+                newline=Dataset(newlist)
                 full_list.append(newline)
                 newlist=[]
             
-        elif type=="BAR" or type=="PIE":
+        elif self.type=="BAR" or self.type=="PIE":
             for y in range(0,len(data[0])):
                 newlist.append(data[0][y]) #graph names
                 
@@ -68,18 +72,18 @@ class DataList(object):
                     else:
                         newlist.append(int(data[x][y]))
                         
-                newline=Line(newlist)
+                newline=Dataset(newlist)
                 full_list.append(newline)
                 newlist=[]
         else:
             file.close()
-            return 0 #empty file
+            self.type=0 #data error, reset type
+            return 0
         
         self.data=full_list
         self.length=len(full_list)
         
         file.close()
-        return type
     
     def get_datalist(self,index):
         return self.data[index]
@@ -128,9 +132,11 @@ class DataList(object):
     def get_maxname(self):
         return self._maxname
     
+    def get_type(self):
+        return self.type
     
 #Class for individual graphs
-class Line:
+class Dataset:
     
     def __init__(self, datalist):
         self._data=datalist

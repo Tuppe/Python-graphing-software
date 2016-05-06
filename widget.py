@@ -63,7 +63,7 @@ class PieWidget(QtGui.QWidget):
                 piesum+=piedata[x]
 
 
-#Main class for Legend, store all tabs
+#Main class for datadock, store all data tabs here
 class DataTab(QtGui.QTabWidget):
   
     def __init__(self):
@@ -176,7 +176,7 @@ class LegendView(QtGui.QGraphicsView):
             for x in range(0,data.get_datalist(1).get_len()):
                 color=QtGui.QColor.fromHsvF(float(1)/data.get_datalist(1).get_len()*x,0.9,0.9,1) #generate colors
                 
-                text='{:.1f}'.format(piedata[x]/57.6)+" % - "+data.get_datalist(0).get_data()[x]
+                text='{:.1f}'.format(piedata[x]/57.6)+" % - "+data.get_datalist(0).get_data()[x] #format pie legend text
                 self.item = LegendItem(QtCore.QPoint(30,30*x),color,data.get_datalist(1),text,graphwidget)
                 self.scene.addItem(self.item)
         

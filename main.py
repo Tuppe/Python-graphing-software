@@ -20,7 +20,7 @@ class MainWindow(QtGui.QMainWindow):
         #Setup initial empty view
         legendWidget=TextWidget(self.path,"",QtCore.Qt.red)
         dataWidget=TextWidget(self.path,"",QtCore.Qt.red)
-        self.graphWidget=TextWidget(self.path,"Start by loading data",QtCore.Qt.black)
+        self.graphWidget=TextWidget(self.path,"Start by loading data in File menu",QtCore.Qt.darkGray)
         self.setCentralWidget(self.graphWidget)
         
         #------TOOLBAR------#
@@ -37,7 +37,7 @@ class MainWindow(QtGui.QMainWindow):
         
         #-----DROPDOWN MENU-----#
         menubar = self.menuBar()
-        menubar.setNativeMenuBar(False) #show menu in linux
+        menubar.setNativeMenuBar(False) #show menu also in linux
         
         #Add menus
         fileMenu = menubar.addMenu('&File')
@@ -79,7 +79,7 @@ class MainWindow(QtGui.QMainWindow):
         if sender.text()=="Show data":
             self.datadock.setVisible(1-self.datadock.isVisible())
     
-    #Show input dialog for changing the titles
+    #Show input dialog for changing the axis names
     def showNameDialog(self):
         
         sender = self.sender()
@@ -137,8 +137,8 @@ class MainWindow(QtGui.QMainWindow):
         self.datadock.destroy()
         
         #load data
-        newdata=DataList()
-        datatype=newdata.load(file)
+        newdata=DataList(file)
+        datatype=newdata.get_type()
         
         #setup main graph
         if datatype=="PIE":
@@ -148,6 +148,7 @@ class MainWindow(QtGui.QMainWindow):
             self.graphWidget = GraphWidget(newdata,datatype)
             self.set_toolbaritem_visibility(1,1,1,1,0)
         else:
+            #invalid graph type
             self.graphWidget = TextWidget(file,'Data Error {:s}',QtCore.Qt.red)
             
             self.set_toolbaritem_visibility(0,0,0,0,0)
